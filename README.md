@@ -59,7 +59,6 @@ python process_audio.py
 - `main.py`: FastAPI application with RAG pipeline
 - `requirements.txt`: Project dependencies
 - `.env`: Environment variables and API keys
-<br/>
 
 #### Directories:
 - `model_outputs/`: Directory for storing generated audio responses
