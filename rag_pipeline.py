@@ -70,10 +70,10 @@ class RAGPipeline:
         full_response = result["generator"]["replies"][0]
         
         # Extract question type and content
-        if full_response.startswith('question: '):
+        if full_response.startswith('question: ') or full_response.startswith('Question: '):
             prompt_type = 'question'
             content = full_response[len('question: '):].strip()
-        elif full_response.startswith('statement: '):
+        elif full_response.startswith('statement: ') or full_response.startswith('Statement: '):
             prompt_type = 'statement'
             content = full_response[len('statement: '):].strip()
         else:

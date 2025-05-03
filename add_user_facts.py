@@ -15,8 +15,8 @@ def add_user_facts():
             "Ahmed is a male, married, and the father of two children.",
             "Ahmed is 44 years old and was born on February 2, 1979.",
             "Mother's name is Scarlet.",
-            "Father's name is John."
-            "Ahmed has a Bachelor of Science in Computer Science from the University of California, Berkeley."
+            "Father's name is John.",
+            "Ahmed has a Bachelor of Science in Computer Science from the University of California, Berkeley.",
             "Ahmed works as a software engineer specializing in AI and machine learning.",
             "Ahmed has experience with Python, FastAPI, and Haystack framework.",
             "Ahmed is interested in natural language processing and computer vision.",
