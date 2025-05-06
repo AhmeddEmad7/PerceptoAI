@@ -11,7 +11,7 @@ load_dotenv()
 app = FastAPI(title="PerceptoAI RAG Pipeline")
 
 CONVERSATION_COUNT_THRESHOLD = 20
-USER_NAME = "Fawzy"
+USER_NAME = "Ahmed"
 
 @app.get("/")
 async def root():
