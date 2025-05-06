@@ -9,11 +9,11 @@ class RAGPipeline:
     def __init__(self, user_name: str):
         self.user_name = user_name
         self.prompt_template = """
-           You are PerceptoAI, {{user_name}}'s helpful AI assistant. You are given a statement or question from {{user_name}} and a set of relevant documents.
+           You are PerceptoAI, {{user_name}}'s helpful AI assistant. You are given a statement, a reminder or a question from {{user_name}} and a set of relevant documents.
             
-            First, determine if this is a question or statement:
+            First, determine if this is a question, statement or a reminder:
             - If it's a question: Respond with 'question' followed by your answer
-            - If it's a statement: Respond with 'statement' followed by your acknowledgment
+            - If it's a statement or a reminder: Respond with 'statement' followed by your acknowledgment
             
             If the input is a question:
             - Analyze the retrieved documents to find relevant information
