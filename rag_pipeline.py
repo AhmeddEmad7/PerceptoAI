@@ -88,3 +88,4 @@ class RAGPipeline:
             "answer": content,
             "prompt_type": prompt_type
         }
+        

@@ -53,7 +53,7 @@ class ConversationSummarizer:
                     self._calculate_similarity(prev_emb, embedding)
                     for prev_emb in cluster["embeddings"] #All embeddings in one cluster
                 ]
-                if any(sim >= 0.5 for sim in similarities):
+                if any(sim >= 0.6 for sim in similarities):
                     cluster["documents"].append(doc)
                     cluster["embeddings"].append(embedding)
                     added_to_cluster = True
@@ -110,7 +110,7 @@ class ConversationSummarizer:
             summary_docs = []
             for i, meta in enumerate(summary_all_docs['metadatas']):
                 summary_docs.append({
-                        'id': summary_all_docs['ids'][i],
+                        'id': str(uuid.uuid4()),
                         'content': summary_all_docs['documents'][i],
                         'embedding': summary_all_docs['embeddings'][i],
                         'metadata': meta

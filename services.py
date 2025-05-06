@@ -6,6 +6,7 @@ import chromadb
 from database import ConversationDatabase
 from haystack.components.embedders import OpenAITextEmbedder
 from haystack_integrations.document_stores.chroma.document_store import ChromaDocumentStore
+import uuid
 
 async def convert_audio_to_text(audio_path: str) -> str:
     """
@@ -44,7 +45,7 @@ def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEm
         
         # Saving in SQLite
         conversation_db = ConversationDatabase()
-        conversation_id, conversation_count = conversation_db.save_conversation(user_input, ai_response["answer"], conversation_count_threshold)
+        _, conversation_count = conversation_db.save_conversation(user_input, ai_response["answer"], conversation_count_threshold)
         
         # Saving in ChromaDB
         if ai_response["prompt_type"] != 'question':
@@ -52,7 +53,7 @@ def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEm
             embedding = embedder.run(conversation_text)
             
             document = {
-                "id": str(conversation_id),
+                "id": str(uuid.uuid4()),
                 "content": conversation_text,
                 "embedding": embedding['embedding'],
                 "metadata": {

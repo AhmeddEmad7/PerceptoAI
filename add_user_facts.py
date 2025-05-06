@@ -1,6 +1,7 @@
 import chromadb
 from datetime import datetime
 from haystack.components.embedders import OpenAITextEmbedder
+import uuid
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,7 +31,7 @@ def add_user_facts():
         documents = []
         for i, fact in enumerate(facts):
             documents.append({
-                "id": f"fact_{i}",
+                "id": str(uuid.uuid4()),
                 "content": fact,
                 "embedding": embeddings[i]['embedding'],
                 "metadata": {
