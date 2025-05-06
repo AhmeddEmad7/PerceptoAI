@@ -17,7 +17,7 @@ def add_user_facts():
         facts = [
             f"{USER_NAME} is a male, married, and the father of two children.",
             f"{USER_NAME} is 44 years old and was born on February 2, 1979.",
-            f"Mother's name is Riem.",
+            f"Mother's name is Scarlett.",
             f"Father's name is John.",
             f"{USER_NAME} has a Bachelor of Science in Computer Science from the University of California, Berkeley.",
             f"{USER_NAME} works as a software engineer specializing in AI and machine learning.",
