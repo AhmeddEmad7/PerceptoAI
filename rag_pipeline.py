@@ -9,7 +9,7 @@ class RAGPipeline:
     def __init__(self, user_name: str):
         self.user_name = user_name
         self.prompt_template = """
-           You are PerceptoAI, {{user_name}}'s helpful AI assistant. You are given a statement or question and a set of relevant documents.
+           You are PerceptoAI, {{user_name}}'s helpful AI assistant. You are given a statement or question from {{user_name}} and a set of relevant documents.
             
             First, determine if this is a question or statement:
             - If it's a question: Respond with 'question' followed by your answer
@@ -57,11 +57,14 @@ class RAGPipeline:
 
     def process_query(self, query: str, top_k: int = 5):
         """Process a query through the RAG pipeline"""
-        result = self.pipeline.run({
-            "query_embedder": {"text": query},
-            "retriever": {"top_k": top_k},
-            "prompt": {"query": query}
-        }, include_outputs_from="retriever")
+        result = self.pipeline.run(
+            {
+                "query_embedder": {"text": query},
+                "retriever": {"top_k": top_k},
+                "prompt": {"query": query, "user_name": self.user_name},
+            },
+            include_outputs_from="retriever"
+        )
         
         print("\nRetrieved Documents:")
         print(result['retriever']['documents'])
@@ -85,4 +88,3 @@ class RAGPipeline:
             "answer": content,
             "prompt_type": prompt_type
         }
-        
