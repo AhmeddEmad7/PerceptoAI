@@ -21,6 +21,9 @@ pip install -r requirements.txt
 2. Fill in your API keys in `.env` :
 ```bash
 echo "DEEPSEEK_API_KEY=<deepseek_api_key>" >> .env
+```
+OR
+```bash
 echo "OPENAI_API_KEY=<openai_api_key>" >> .env
 ```
 
@@ -42,7 +45,7 @@ python process_audio.py
 
 ## API Endpoints
 
-- GET `/`: Returns a welcome message
+- GET `/`: Returns a message that server is running
 
 - POST `/process_audio`: Process audio input and get AI response
   - Accepts: Audio file (any format)
@@ -51,11 +54,13 @@ python process_audio.py
 ## Project Structure
 
 #### Files:
-- `rag_pipeline.py`: RAG pipeline implementation
-- `services.py`: Audio processing services
-- `database.py`: SQLite database operations
-- `process_audio.py`: Audio processing script by sending audio to endpoint
 - `add_user_facts.py`: Script for adding user facts to ChromaDB
+- `rag_pipeline.py`: RAG pipeline
+- `services.py`: Audio processing services
+- `database.py`: SQLite and ChromaDB databases operations
+- `process_audio.py`: Audio processing script by sending audio to endpoint
+- `summarizer.py`: Conversation summarizer
+- `record.py`: Audio recording script for simulating endpoint calling
 - `main.py`: FastAPI application with RAG pipeline
 - `requirements.txt`: Project dependencies
 - `.env`: Environment variables and API keys
@@ -67,10 +72,12 @@ python process_audio.py
 
 ## Technologies
 
-- FastAPI: Web framework
-- Haystack: For RAG pipeline implementation
-- ChromaDB: Vector database for memory storage
-- SQLite: Local database for conversation history
-- SoundDevice: Audio input/output handling
-- Whisper: Speech-to-text transcription
-- gTTS: Text-to-speech conversion
+- **OpenAI API**: For embeddings and responses generation 
+- **FastAPI**: Web framework
+- **Haystack**: For RAG pipeline implementation
+- **ChromaDB**: Vector database for memory storage
+- **SQLite**: Local database for conversation history
+- **SoundDevice**: Audio input/output handling
+- **Whisper**: Speech-to-text transcription
+- **gTTS**: Text-to-speech conversion
+

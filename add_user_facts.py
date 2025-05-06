@@ -1,20 +1,20 @@
 import chromadb
 from datetime import datetime
-from fastapi import HTTPException
 from haystack.components.embedders import OpenAITextEmbedder
 from dotenv import load_dotenv
 
 load_dotenv()
 chroma_client = chromadb.PersistentClient(path="databases/chroma_db")
-collection = chroma_client.get_or_create_collection(name="conversations")
+collection = chroma_client.create_collection(name="conversations")
+# collection = chroma_client.create_collection(name="conversations", configuration={"hnsw": {"space": "cosine"}})
 
 def add_user_facts():
     try:
-        embedder = OpenAITextEmbedder()
+        embedder = OpenAITextEmbedder(model="text-embedding-3-large")
         facts = [
             "Ahmed is a male, married, and the father of two children.",
             "Ahmed is 44 years old and was born on February 2, 1979.",
-            "Mother's name is Scarlet.",
+            "Mother's name is Scarlett.",
             "Father's name is John.",
             "Ahmed has a Bachelor of Science in Computer Science from the University of California, Berkeley.",
             "Ahmed works as a software engineer specializing in AI and machine learning.",
@@ -32,7 +32,7 @@ def add_user_facts():
                 "content": fact,
                 "embedding": embeddings[i]['embedding'],
                 "metadata": {
-                    "category": "user_profile",
+                    "type": "fact",
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
             })
@@ -47,6 +47,6 @@ def add_user_facts():
         print("User facts added to ChromaDB successfully!")
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error adding user facts: {str(e)}")
+        raise RuntimeError(f"Error adding user facts: {str(e)}")
 
 add_user_facts()

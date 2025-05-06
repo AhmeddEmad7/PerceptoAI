@@ -1,7 +1,7 @@
 import requests
 import os
 
-audio_file_path = "audio_prompts/ask_swe.mp3"
+audio_file_path = "audio_prompts/birth-related.wav"
 if not os.path.exists(audio_file_path):
     print(f"Error: File not found at {audio_file_path}")
     exit(1)

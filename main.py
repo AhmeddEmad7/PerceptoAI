@@ -1,24 +1,31 @@
 import uvicorn
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from services import convert_audio_to_text, convert_text_to_speech, save_conversation
 from rag_pipeline import RAGPipeline
-import os
+from summarizer import ConversationSummarizer
 import tempfile
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
-
 app = FastAPI(title="PerceptoAI RAG Pipeline")
-rag_pipeline = RAGPipeline()
+
+CONVERSATION_COUNT_THRESHOLD = 20
+USER_NAME = "Fawzy"
 
 @app.get("/")
 async def root():
     return {"message": "PerceptoAI server is running!"}
 
 @app.post("/process_audio")
-async def process_audio(file: UploadFile = File(...)):
+async def process_audio(
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
     try:
-
+        rag_pipeline = RAGPipeline(user_name=USER_NAME)
+        conversation_summarizer = ConversationSummarizer(rag_pipeline)
+        
         with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
             content = await file.read()
             temp_file.write(content)
@@ -27,10 +34,15 @@ async def process_audio(file: UploadFile = File(...)):
             prompt = await convert_audio_to_text(temp_file.name)
             response = rag_pipeline.process_query(prompt)
             audio_response = await convert_text_to_speech(response["answer"])
-
-            save_conversation(prompt, response)
-
-            return {
+        
+            conversation_count = save_conversation(prompt, response, rag_pipeline.embedder,
+                                                             CONVERSATION_COUNT_THRESHOLD)
+            
+            print("Number of conversations processed:", conversation_count)
+            background_tasks.add_task(conversation_summarizer.process_conversation,
+                                        conversation_count, CONVERSATION_COUNT_THRESHOLD)
+        
+        return {
                 "transcription": prompt,
                 "prompt_type": response["prompt_type"],
                 "response": response["answer"],

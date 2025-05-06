@@ -5,9 +5,7 @@ from datetime import datetime
 import chromadb
 from database import ConversationDatabase
 from haystack.components.embedders import OpenAITextEmbedder
-
-chroma_client = chromadb.PersistentClient(path="databases/chroma_db")
-collection = chroma_client.get_or_create_collection(name="conversations")
+from haystack_integrations.document_stores.chroma.document_store import ChromaDocumentStore
 
 async def convert_audio_to_text(audio_path: str) -> str:
     """
@@ -36,19 +34,21 @@ async def convert_text_to_speech(answer: str) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating speech: {str(e)}")
 
-def save_conversation(user_input: str, ai_response: dict) -> int:
+def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEmbedder, conversation_count_threshold: int) -> int:
     """
     Save conversation to SQLite and non-question inputs to ChromaDB with embeddings
     """
     try:
+        chroma_client = chromadb.PersistentClient(path="databases/chroma_db")
+        collection = chroma_client.get_or_create_collection(name="conversations")
+        
         # Saving in SQLite
         conversation_db = ConversationDatabase()
-        conversation_id = conversation_db.save_conversation(user_input, ai_response["answer"])
+        conversation_id, conversation_count = conversation_db.save_conversation(user_input, ai_response["answer"], conversation_count_threshold)
         
         # Saving in ChromaDB
-        if ai_response["prompt_type"] == 'statement':
-            embedder = OpenAITextEmbedder()
-            conversation_text = f"User: {user_input}\nAI: {ai_response['answer']}"
+        if ai_response["prompt_type"] != 'question':
+            conversation_text = f"Ahmed: {user_input}"
             embedding = embedder.run(conversation_text)
             
             document = {
@@ -56,20 +56,19 @@ def save_conversation(user_input: str, ai_response: dict) -> int:
                 "content": conversation_text,
                 "embedding": embedding['embedding'],
                 "metadata": {
-                    "user_input": user_input,
-                    "ai_response": ai_response["answer"],
+                    "type": "conversation",
                     "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
             
-            # Add document to ChromaDB
             collection.add(
                 ids=[document["id"]],
                 embeddings=[document["embedding"]],
                 documents=[document["content"]],
                 metadatas=[document["metadata"]]
-            )      
-        return conversation_id
+            )        
+        
+        return conversation_count
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving conversation: {str(e)}")

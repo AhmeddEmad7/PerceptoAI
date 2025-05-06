@@ -1,4 +1,3 @@
-from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack import Pipeline
 from haystack.components.embedders import OpenAITextEmbedder
 from haystack.components.builders import PromptBuilder
@@ -7,9 +6,10 @@ from haystack_integrations.components.retrievers.chroma import ChromaEmbeddingRe
 from haystack_integrations.document_stores.chroma import ChromaDocumentStore
 
 class RAGPipeline:
-    def __init__(self):
+    def __init__(self, user_name: str):
+        self.user_name = user_name
         self.prompt_template = """
-           You are PerceptoAI, Ahmed's helpful AI assistant. You are given a statement or question and a set of relevant documents.
+           You are PerceptoAI, {{user_name}}'s helpful AI assistant. You are given a statement or question and a set of relevant documents.
             
             First, determine if this is a question or statement:
             - If it's a question: Respond with 'question' followed by your answer
@@ -29,47 +29,45 @@ class RAGPipeline:
             - For questions: 'question: [your answer]'
             - For statements: 'statement: [your acknowledgment]'
             
-            Do not ever mention the word 'documents' in your response.
+            Do not mention 'documents' in your response.
             
-            Retrieved Documents:
+            Retrieved Information:
             {% for document in documents %}
-                Content: {{document.content}}
-                Metadata: {{document.metadata}}
+                {{document.content}}
             {% endfor %}
 
             Input: {{query}}
         """
 
         self.document_store = ChromaDocumentStore(persist_path="databases/chroma_db", collection_name="conversations")
-        self.query_embedder = OpenAITextEmbedder()
+        self.embedder = OpenAITextEmbedder(model="text-embedding-3-large")
         self.chroma_retriever = ChromaEmbeddingRetriever(document_store=self.document_store)
         self.prompt_builder = PromptBuilder(template=self.prompt_template)
-        self.generator = OpenAIGenerator(model="gpt-4")
+        self.generator = OpenAIGenerator(model="gpt-4o-mini")
 
-        # Create pipeline
         self.pipeline = Pipeline()
-        self.pipeline.add_component("query_embedder", self.query_embedder)
+        self.pipeline.add_component("query_embedder", self.embedder)
         self.pipeline.add_component("retriever", self.chroma_retriever)
         self.pipeline.add_component("prompt", self.prompt_builder)
         self.pipeline.add_component("generator", self.generator)
 
-        # Connect components
         self.pipeline.connect("query_embedder.embedding", "retriever.query_embedding")
         self.pipeline.connect("retriever.documents", "prompt.documents")
         self.pipeline.connect("prompt", "generator")
 
-    def process_query(self, query: str, top_k: int = 3):
+    def process_query(self, query: str, top_k: int = 5):
         """Process a query through the RAG pipeline"""
         result = self.pipeline.run({
             "query_embedder": {"text": query},
-            "prompt": {"query": query},
-            "retriever": {"top_k": top_k}
-        })
+            "retriever": {"top_k": top_k},
+            "prompt": {"query": query}
+        }, include_outputs_from="retriever")
         
-        # Get the full response
+        print("\nRetrieved Documents:")
+        print(result['retriever']['documents'])
+        
         full_response = result["generator"]["replies"][0]
         
-        # Extract question type and content
         if full_response.startswith('question: ') or full_response.startswith('Question: '):
             prompt_type = 'question'
             content = full_response[len('question: '):].strip()
