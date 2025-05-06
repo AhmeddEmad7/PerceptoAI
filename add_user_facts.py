@@ -4,6 +4,8 @@ from haystack.components.embedders import OpenAITextEmbedder
 from dotenv import load_dotenv
 
 load_dotenv()
+USER_NAME = "Ahmed"
+
 chroma_client = chromadb.PersistentClient(path="databases/chroma_db")
 collection = chroma_client.create_collection(name="conversations")
 # collection = chroma_client.create_collection(name="conversations", configuration={"hnsw": {"space": "cosine"}})
@@ -12,16 +14,16 @@ def add_user_facts():
     try:
         embedder = OpenAITextEmbedder(model="text-embedding-3-large")
         facts = [
-            "Ahmed is a male, married, and the father of two children.",
-            "Ahmed is 44 years old and was born on February 2, 1979.",
-            "Mother's name is Scarlett.",
-            "Father's name is John.",
-            "Ahmed has a Bachelor of Science in Computer Science from the University of California, Berkeley.",
-            "Ahmed works as a software engineer specializing in AI and machine learning.",
-            "Ahmed has experience with Python, FastAPI, and Haystack framework.",
-            "Ahmed is interested in natural language processing and computer vision.",
-            "Ahmed is currently working on a voice-activated AI assistant project.",
-            "Ahmed enjoys solving complex problems with AI solutions.",
+            f"{USER_NAME} is a male, married, and the father of two children.",
+            f"{USER_NAME} is 44 years old and was born on February 2, 1979.",
+            f"Mother's name is Riem.",
+            f"Father's name is John.",
+            f"{USER_NAME} has a Bachelor of Science in Computer Science from the University of California, Berkeley.",
+            f"{USER_NAME} works as a software engineer specializing in AI and machine learning.",
+            f"{USER_NAME} has experience with Python, FastAPI, and Haystack framework.",
+            f"{USER_NAME} is interested in natural language processing and computer vision.",
+            f"{USER_NAME} is currently working on a voice-activated AI assistant project.",
+            f"{USER_NAME} enjoys solving complex problems with AI solutions.",
         ]
         
         embeddings = [embedder.run(fact) for fact in facts]
