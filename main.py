@@ -36,7 +36,7 @@ async def process_audio(
             audio_response = await convert_text_to_speech(response["answer"])
         
             conversation_count = save_conversation(prompt, response, rag_pipeline.embedder,
-                                                             CONVERSATION_COUNT_THRESHOLD)
+                                                   USER_NAME, CONVERSATION_COUNT_THRESHOLD)
             
             print("Number of conversations processed:", conversation_count)
             background_tasks.add_task(conversation_summarizer.process_conversation,

@@ -35,7 +35,7 @@ async def convert_text_to_speech(answer: str) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating speech: {str(e)}")
 
-def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEmbedder, conversation_count_threshold: int) -> int:
+def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEmbedder, user_name: str, conversation_count_threshold: int) -> int:
     """
     Save conversation to SQLite and non-question inputs to ChromaDB with embeddings
     """
@@ -49,7 +49,7 @@ def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEm
         
         # Saving in ChromaDB
         if ai_response["prompt_type"] != 'question':
-            conversation_text = f"Ahmed: {user_input}"
+            conversation_text = f"{user_name}: {user_input}"
             embedding = embedder.run(conversation_text)
             
             document = {
