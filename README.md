@@ -9,7 +9,11 @@ PerceptoAI is a smart AI assistant powered by a Raspberry Pi that uses voice inp
 - Text-to-speech conversion for AI responses
 - Local conversation storage with SQLite
 - Vector-based memory storage using ChromaDB
+- Custom components for weather, location, date-time, and web search
 - FastAPI backend service
+
+## RAG Pipeline:
+![Pipeline](assets/pipeline.png)
 
 ## Setup
 
@@ -53,22 +57,31 @@ python process_audio.py
 
 ## Project Structure
 
-#### Files:
-- `add_user_facts.py`: Script for adding user facts to ChromaDB
+### Directories:
+- `data/`: Directory for storing data files
+  - `databases/`: Directory for storing database files
+  - `audio_prompts/`: Directory for storing audio prompts
+  - `model_outputs/`: Directory for storing generated audio responses
+
+### Files:
+#### ➡️ Main App:
+- `main.py`: FastAPI application with RAG pipeline
+  
+#### ➡️ RAG:
+- `rag_config.py`: RAG pipeline configuration
+- `custom_components.py`: Custom components for RAG pipeline
+- `summarizer.py`: Conversation summarizer
 - `rag_pipeline.py`: RAG pipeline
+
+#### ➡️ Scripts:
+- `record.py`: Recording script saving an audio file
+- `add_user_facts.py`: Script for adding user facts to ChromaDB
+- `process_audio.py`: Audio processing script by sending audio to endpoint
+
+#### ➡️ Services:
 - `services.py`: Audio processing services
 - `database.py`: SQLite and ChromaDB databases operations
-- `process_audio.py`: Audio processing script by sending audio to endpoint
-- `summarizer.py`: Conversation summarizer
-- `record.py`: Audio recording script for simulating endpoint calling
-- `main.py`: FastAPI application with RAG pipeline
-- `requirements.txt`: Project dependencies
-- `.env`: Environment variables and API keys
 
-#### Directories:
-- `model_outputs/`: Directory for storing generated audio responses
-- `audio_prompts/`: Directory for storing audio prompts
-- `databases/`: Directory for storing database files
 
 ## Technologies
 
@@ -77,7 +90,7 @@ python process_audio.py
 - **Haystack**: For RAG pipeline implementation
 - **ChromaDB**: Vector database for memory storage
 - **SQLite**: Local database for conversation history
-- **SoundDevice**: Audio input/output handling
+- **SoundDevice**: Audio input recording
 - **Whisper**: Speech-to-text transcription
 - **gTTS**: Text-to-speech conversion
 

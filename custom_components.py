@@ -71,7 +71,7 @@ class LocationRetriever:
             return None
 
     @component.output_types(user_location=dict)
-    def run(self, query: str) -> dict:
+    def run(self, query: str = None) -> dict:
         location = self.get_user_location()
         return {"content": location}
 
@@ -80,7 +80,7 @@ class DateTimeRetriever:
     def __init__(self, api_key: str):
         self.api_key = api_key
 
-    @component.output_types(result=dict)
+    @component.output_types(datetime=dict)
     def run(self, query: str) -> dict:
         match = re.search(r"(?:time|date).*?(?:in|at|for)\s+([a-zA-Z\s]+)", query, re.IGNORECASE)
         location = match.group(1).strip().title() if match else "Cairo"
@@ -122,7 +122,7 @@ class WeatherRetriever:
     def __init__(self, api_key: str):
         self.api_key = api_key
 
-    @component.output_types(result=dict)
+    @component.output_types(weather=dict)
     def run(self, query: str) -> dict:
         # More comprehensive location detection for weather queries
         location_patterns = [

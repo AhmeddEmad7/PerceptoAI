@@ -7,7 +7,7 @@ import chromadb
 class ConversationSummarizer:
     def __init__(self, rag_pipeline: RAGPipeline):
         self.rag_pipeline = rag_pipeline
-        self.collection = chromadb.PersistentClient(path="databases/chroma_db").get_or_create_collection(name="conversations")
+        self.collection = chromadb.PersistentClient(path="data/databases/chroma_db").get_or_create_collection(name="conversations")
         
     def process_conversation(self, conversation_count, conversation_count_threshold):
         """Process a new conversation and trigger summarization if needed"""
@@ -97,7 +97,7 @@ class ConversationSummarizer:
     def _save_summaries(self, summaries):
         """Save summaries and update the document store"""
         try:
-            client = chromadb.PersistentClient(path="databases/chroma_db")
+            client = chromadb.PersistentClient(path="data/databases/chroma_db")
             collection_name = "conversations"
             temp_collection_name = "conversations_temp"
 

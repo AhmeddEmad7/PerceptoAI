@@ -8,6 +8,10 @@ from haystack_integrations.document_stores.chroma import ChromaDocumentStore
 from haystack.components.routers import ConditionalRouter
 from custom_components import LocationRetriever, DateTimeRetriever, WeatherRetriever, SerpAPIWebSearch
 from rag_config import PROMPT_TEMPLATE, ROUTES
+from dotenv import load_dotenv
+import graphviz
+
+load_dotenv()
 
 class RAGPipeline:
     def __init__(self, user_name: str):
@@ -81,7 +85,7 @@ class RAGPipeline:
                 prompt_type = type_name
                 
                 if type_name == 'web_search':
-                    if result["web_search"]["web_documents"] and result["web_search"]["web_documents"][0]['content']:
+                    if result["web_search"]["web_documents"]:
                         content = "I have searched the web and found the following: " + result["web_search"]["web_documents"][0]['content']
                     else:
                         content = "I couldn't find any relevant information through web search."
@@ -96,6 +100,17 @@ class RAGPipeline:
             "answer": content,
             "prompt_type": prompt_type
         }
+
+    def export_pipeline_diagram(self, output_path: str = 'pipeline_diagrams.png'):
+        """
+        Export the pipeline diagram to a PNG file.
+        """ 
+        self.pipeline.draw(output_path, params={
+            "format": "img",
+            "theme": "default",
+            "bgColor": "#FFFFFF"
+        })
+        return
 
 
         # if generator_reply.startswith('question: ') or generator_reply.startswith('Question: '):
@@ -124,3 +139,6 @@ class RAGPipeline:
         #         content = "I have searched the web and found the following: " + result["web_search"]["web_documents"][0]['content']
         #     else:
         #         content = "I couldn't find any relevant information through web search."
+
+rag_pipeline = RAGPipeline(user_name="Ahmed")
+rag_pipeline.export_pipeline_diagram()

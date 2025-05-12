@@ -27,7 +27,7 @@ async def convert_text_to_speech(answer: str) -> str:
     """
     try:
         tts = gTTS(text=answer, lang='en', slow=False, tld='fr')
-        output_path = f"model_outputs/output_{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp3"
+        output_path = f"data/model_outputs/output_{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp3"
         tts.save(output_path)
         
         return output_path
@@ -40,7 +40,7 @@ def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEm
     Save conversation to SQLite and non-question inputs to ChromaDB with embeddings
     """
     try:
-        chroma_client = chromadb.PersistentClient(path="databases/chroma_db")
+        chroma_client = chromadb.PersistentClient(path="data/databases/chroma_db")
         collection = chroma_client.get_or_create_collection(name="conversations")
         
         # Saving in SQLite

@@ -2,7 +2,7 @@ import sqlite3
 from typing import List, Dict, Optional
 
 class ConversationDatabase:
-    def __init__(self, db_path: str = "databases/conversations.db"):
+    def __init__(self, db_path: str = "data/databases/conversations.db"):
         self.db_path = db_path
         self._initialize_database()
 

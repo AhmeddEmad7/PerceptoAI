@@ -1,7 +1,7 @@
 import requests
 import os
 
-audio_file_path = "audio_prompts/datetime.wav"
+audio_file_path = "data/audio_prompts/ask_family.wav"
 if not os.path.exists(audio_file_path):
     print(f"Error: File not found at {audio_file_path}")
     exit(1)

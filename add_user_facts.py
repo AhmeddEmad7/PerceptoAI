@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from rag_config import USER_NAME
 
 load_dotenv()
-chroma_client = chromadb.PersistentClient(path="databases/chroma_db")
+chroma_client = chromadb.PersistentClient(path="data/databases/chroma_db")
 collection = chroma_client.create_collection(name="conversations")
 # collection = chroma_client.create_collection(name="conversations", configuration={"hnsw": {"space": "cosine"}})
 
