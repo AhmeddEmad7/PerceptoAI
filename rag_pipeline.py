@@ -139,6 +139,3 @@ class RAGPipeline:
         #         content = "I have searched the web and found the following: " + result["web_search"]["web_documents"][0]['content']
         #     else:
         #         content = "I couldn't find any relevant information through web search."
-
-rag_pipeline = RAGPipeline(user_name="Ahmed")
-rag_pipeline.export_pipeline_diagram()
