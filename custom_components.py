@@ -73,7 +73,7 @@ class LocationRetriever:
     @component.output_types(user_location=dict)
     def run(self, query: str = None) -> dict:
         location = self.get_user_location()
-        return {"content": location}
+        return {"content": f"Based on your location, you are at {location}."}
 
 @component
 class DateTimeRetriever:
