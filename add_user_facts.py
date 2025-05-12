@@ -3,10 +3,9 @@ from datetime import datetime
 from haystack.components.embedders import OpenAITextEmbedder
 import uuid
 from dotenv import load_dotenv
+from rag_config import USER_NAME
 
 load_dotenv()
-USER_NAME = "Ahmed"
-
 chroma_client = chromadb.PersistentClient(path="databases/chroma_db")
 collection = chroma_client.create_collection(name="conversations")
 # collection = chroma_client.create_collection(name="conversations", configuration={"hnsw": {"space": "cosine"}})
@@ -17,14 +16,7 @@ def add_user_facts():
         facts = [
             f"{USER_NAME} is a male, married, and the father of two children.",
             f"{USER_NAME} is 44 years old and was born on February 2, 1979.",
-            f"Mother's name is Scarlett.",
-            f"Father's name is John.",
-            f"{USER_NAME} has a Bachelor of Science in Computer Science from the University of California, Berkeley.",
-            f"{USER_NAME} works as a software engineer specializing in AI and machine learning.",
-            f"{USER_NAME} has experience with Python, FastAPI, and Haystack framework.",
-            f"{USER_NAME} is interested in natural language processing and computer vision.",
-            f"{USER_NAME} is currently working on a voice-activated AI assistant project.",
-            f"{USER_NAME} enjoys solving complex problems with AI solutions.",
+            f"{USER_NAME} has a Bachelor of Science in Computer Science from the University of California, Berkeley."
         ]
         
         embeddings = [embedder.run(fact) for fact in facts]

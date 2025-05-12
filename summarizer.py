@@ -7,7 +7,7 @@ import chromadb
 class ConversationSummarizer:
     def __init__(self, rag_pipeline: RAGPipeline):
         self.rag_pipeline = rag_pipeline
-        self.collection = chromadb.PersistentClient(path="databases/chroma_db").get_collection(name="conversations")
+        self.collection = chromadb.PersistentClient(path="databases/chroma_db").get_or_create_collection(name="conversations")
         
     def process_conversation(self, conversation_count, conversation_count_threshold):
         """Process a new conversation and trigger summarization if needed"""

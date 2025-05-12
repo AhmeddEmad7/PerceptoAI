@@ -48,7 +48,7 @@ def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEm
         _, conversation_count = conversation_db.save_conversation(user_input, ai_response["answer"], conversation_count_threshold)
         
         # Saving in ChromaDB
-        if ai_response["prompt_type"] != 'question':
+        if ai_response["prompt_type"] == 'statement':
             conversation_text = f"{user_name}: {user_input}"
             embedding = embedder.run(conversation_text)
             

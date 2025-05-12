@@ -6,12 +6,10 @@ from summarizer import ConversationSummarizer
 import tempfile
 from dotenv import load_dotenv
 import os
+from rag_config import USER_NAME, CONVERSATION_COUNT_THRESHOLD
 
 load_dotenv()
 app = FastAPI(title="PerceptoAI RAG Pipeline")
-
-CONVERSATION_COUNT_THRESHOLD = 20
-USER_NAME = "Ahmed"
 
 @app.get("/")
 async def root():
