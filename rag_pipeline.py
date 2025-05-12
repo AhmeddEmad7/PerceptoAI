@@ -19,7 +19,7 @@ class RAGPipeline:
         self.prompt_template = PROMPT_TEMPLATE
         self.routes = ROUTES
 
-        self.document_store = ChromaDocumentStore(persist_path="databases/chroma_db", collection_name="conversations")
+        self.document_store = ChromaDocumentStore(persist_path="data/databases/chroma_db", collection_name="conversations")
         self.embedder = OpenAITextEmbedder(model="text-embedding-3-large")
         self.chroma_retriever = ChromaEmbeddingRetriever(document_store=self.document_store)
         self.prompt_builder = PromptBuilder(template=self.prompt_template)
