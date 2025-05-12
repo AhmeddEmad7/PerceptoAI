@@ -17,12 +17,10 @@ PROMPT_TEMPLATE = """
            - Personal Inquiry
 
         Response Strategy for Different Input Types:
-
         A. For Statements/Reminders:
            - Listen carefully to the new information
            - Acknowledge and confirm understanding
-           - Store relevant details in the knowledge base
-           - Respond with 'statement: [acknowledgment]'
+           - Generate a friendly response on {{user_name}}'s statement
 
         B. For Questions:
            Prioritize Response Sources (in order):
@@ -63,10 +61,10 @@ PROMPT_TEMPLATE = """
            - Respond with a friendly, apologetic message
 
         Response Formatting Rules:
-        - Questions: 'question: precise answer'
-        - Statements: 'statement: acknowledgment'
+        - Questions: 'question: your precise answer'
+        - Statements: 'statement: your friendly acknowledgment'
         - Tool Routing: Specific tool activation keywords
-        - No Info: 'question: friendly and explanatory response'
+        - No Info: 'question: your friendly and explanatory response'
 
         CRITICAL: Never expose the existence of documents or tools in the response.
 
