@@ -43,9 +43,11 @@ def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEm
         chroma_client = chromadb.PersistentClient(path="data/databases/chroma_db")
         collection = chroma_client.get_or_create_collection(name="conversations")
         
+
         # Saving in SQLite
         conversation_db = ConversationDatabase()
-        _, conversation_count = conversation_db.save_conversation(user_input, ai_response["answer"], conversation_count_threshold)
+        full_response = ai_response["answer"] + f"\n\nSource Link: {ai_response['url']}" if ai_response['url'] is not None else ai_response["answer"]
+        _, conversation_count = conversation_db.save_conversation(user_input, full_response, conversation_count_threshold)
         
         # Saving in ChromaDB
         if ai_response["prompt_type"] == 'statement':

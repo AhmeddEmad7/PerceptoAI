@@ -74,6 +74,7 @@ class RAGPipeline:
 
         prompt_type = None
         content = None
+        url = None
 
         for prefix, type_name in prompt_type_map.items():
             if isinstance(prefix, tuple):
@@ -86,7 +87,8 @@ class RAGPipeline:
                 
                 if type_name == 'web_search':
                     if result["web_search"]["web_documents"]:
-                        content = "I have searched the web and found the following: " + result["web_search"]["web_documents"][0]['content']
+                        content = f"I have searched the web and found the following: {result["web_search"]["web_documents"][0]['content']}"
+                        url = result["web_search"]["web_documents"][0]['url']
                     else:
                         content = "I couldn't find any relevant information through web search."
                 else:
@@ -98,7 +100,8 @@ class RAGPipeline:
 
         return {
             "answer": content,
-            "prompt_type": prompt_type
+            "prompt_type": prompt_type,
+            "url": url
         }
 
     def export_pipeline_diagram(self, output_path: str = 'pipeline_diagrams.png'):
