@@ -8,8 +8,8 @@ if not os.path.exists(audio_file_path):
 
 with open(audio_file_path, 'rb') as f:
     files = {'file': f}
-    response = requests.post('http://localhost:8000/process_audio', files=files, params={'new_conv': True})
-    # response = requests.post('http://localhost:8000/process_audio', files=files)
+    response = requests.post('http://localhost:8000/process_audio', files=files)
+    # response = requests.post('http://localhost:8000/process_audio', files=files, params={'new_conv': True})
     
     if response.status_code == 200:
         print("Success!")
