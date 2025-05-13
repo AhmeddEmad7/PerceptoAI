@@ -84,20 +84,16 @@ class RAGPipeline:
                     break
             elif generator_reply.startswith(prefix):
                 prompt_type = type_name
-                
                 if type_name == 'web_search':
-                    if result["web_search"]["web_documents"]:
-                        content = f"I have searched the web and found the following: {result["web_search"]["web_documents"][0]['content']}"
-                        url = result["web_search"]["web_documents"][0]['url']
-                    else:
-                        content = "I couldn't find any relevant information through web search."
+                    content = result["web_search"]["web_documents"]["content"]
+                    url = result["web_search"]["web_documents"]["url"]
                 else:
                     content = result[f"{type_name}_retriever"]["content"]
                 break
-
+        
         print("Prompt type:", prompt_type)
         print("Content:", content)
-
+        
         return {
             "answer": content,
             "prompt_type": prompt_type,
@@ -114,31 +110,3 @@ class RAGPipeline:
             "bgColor": "#FFFFFF"
         })
         return
-
-
-        # if generator_reply.startswith('question: ') or generator_reply.startswith('Question: '):
-        #     prompt_type = 'question'
-        #     content = generator_reply[len('question: '):].strip()
-
-        # elif generator_reply.startswith('statement: ') or generator_reply.startswith('Statement: '):
-        #     prompt_type = 'statement'
-        #     content = generator_reply[len('statement: '):].strip()
-
-        # elif generator_reply.startswith('use_weather_tool'):
-        #     prompt_type = 'weather'
-        #     content = result["weather_retriever"]["content"]
-
-        # elif generator_reply.startswith('use_datetime_tool'):
-        #     prompt_type = 'datetime'
-        #     content = result["datetime_retriever"]["content"]
-
-        # elif generator_reply.startswith('use_location_tool'):
-        #     prompt_type = 'location'
-        #     content = result["location_retriever"]["content"]
-
-        # elif generator_reply.startswith('use_web_search_tool'):
-        #     prompt_type = 'web_search'
-        #     if result["web_search"]["web_documents"] and result["web_search"]["web_documents"][0]['content']:
-        #         content = "I have searched the web and found the following: " + result["web_search"]["web_documents"][0]['content']
-        #     else:
-        #         content = "I couldn't find any relevant information through web search."

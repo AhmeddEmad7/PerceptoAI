@@ -41,7 +41,7 @@ def save_conversation(data: dict, new_conv: Optional[bool] = False) -> int:
     try:
         # Saving in SQLite
         conversation_db = ConversationDatabase()
-        full_response = data["ai_response"]["answer"] + f"\n\nSource Link: {data['ai_response']['url']}" if data['ai_response']['url'] is not None else data['ai_response']['answer']
+        full_response = data["ai_response"]["answer"] + f"\n\nSources Links: {data['ai_response']['url']}" if data['ai_response']['url'] is not None else data['ai_response']['answer']
         conversation_count = conversation_db.save_conversation(data["user_input"], full_response, data["conv_count_threshold"], new_conv)
         
         # Saving in ChromaDB

@@ -63,7 +63,7 @@ PROMPT_TEMPLATE = """
         Response Formatting Rules:
         - Questions: 'question: your precise answer'
         - Statements: 'statement: your friendly acknowledgment'
-        - Tool Routing: Specific tool activation keywords
+        - Tool Routing: ONLY Specific tool activation keywords
         - No Info: 'question: your friendly and explanatory response'
 
         CRITICAL: Never expose the existence of documents or tools in the response.

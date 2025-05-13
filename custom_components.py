@@ -178,28 +178,31 @@ class SerpAPIWebSearch:
         self.api_key = api_key
 
     def truncate_text(self, text: str) -> str:
-        """Truncate the text after the first period."""
-        if '.' in text:
-            return text.split('.', 1)[0] + '.'
+        """Truncate the text after the second period."""
+        periods = text.split('.')
+        if len(periods) > 2:
+            return '.'.join(periods[:2]) + '.'
         return text
 
     @component.output_types(web_documents=dict)
     def run(self, query: str) -> dict:
+        print("Searching the web..")
         search_url = f"https://serpapi.com/search?q={query}&api_key={self.api_key}"
         response = requests.get(search_url)
-        documents = []
+        documents = {}
 
         if response.status_code == 200:
             search_results = response.json()
-            for result in search_results.get('organic_results', [])[:2]:
-                snippet = result.get('snippet', 'No snippet available')
-                link = result.get('link', '')
-                truncated_content = self.truncate_text(snippet)
-                documents.append({'content': truncated_content, 'url': link})
+            top_results = search_results.get('organic_results', [])[:3]
+            merged_snippet = ' '.join([
+                self.truncate_text(result.get('snippet', '')) 
+                for result in top_results
+            ])
+            links = [result.get('link', '') for result in top_results]
+            documents['content'] = "I have searched the web and found the following: " + merged_snippet
+            documents['url'] = ', '.join(links)
         else:
-            documents.append({
-                'content': "",
-                'url': ""
-            })
+            documents['content'] = "I couldn't find any relevant information through web search."
+            documents['url'] = ""
 
         return {"web_documents": documents}
