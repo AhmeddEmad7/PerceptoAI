@@ -9,7 +9,6 @@ from haystack.components.routers import ConditionalRouter
 from custom_components import LocationRetriever, DateTimeRetriever, WeatherRetriever, SerpAPIWebSearch
 from rag_config import PROMPT_TEMPLATE, ROUTES
 from dotenv import load_dotenv
-import graphviz
 
 load_dotenv()
 
