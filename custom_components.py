@@ -172,8 +172,6 @@ class WeatherRetriever:
 
         return result
 
-import requests
-
 @component
 class SerpAPIWebSearch:
     def __init__(self, api_key: str):

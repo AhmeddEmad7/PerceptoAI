@@ -7,6 +7,8 @@ import tempfile
 from dotenv import load_dotenv
 import os
 from rag_config import USER_NAME, CONVERSATION_COUNT_THRESHOLD
+from typing import Optional
+from fastapi import Query
 
 load_dotenv()
 app = FastAPI(title="PerceptoAI RAG Pipeline")
@@ -18,7 +20,8 @@ async def root():
 @app.post("/process_audio")
 async def process_audio(
     file: UploadFile = File(...),
-    background_tasks: BackgroundTasks = BackgroundTasks()
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    new_conv: Optional[bool] = Query(False, description="Start a new conversation")
 ):
     try:
         rag_pipeline = RAGPipeline(user_name=USER_NAME)
@@ -33,8 +36,13 @@ async def process_audio(
             response = rag_pipeline.process_query(prompt)
             audio_response = await convert_text_to_speech(response["answer"])
         
-            conversation_count = save_conversation(prompt, response, rag_pipeline.embedder,
-                                                   USER_NAME, CONVERSATION_COUNT_THRESHOLD)
+            conversation_count = save_conversation({
+                "user_input": prompt,
+                "ai_response": response,
+                "embedder": rag_pipeline.embedder,
+                "user_name": USER_NAME,
+                "conv_count_threshold": CONVERSATION_COUNT_THRESHOLD
+            }, new_conv)
             
             print("Number of conversations processed:", conversation_count)
             background_tasks.add_task(conversation_summarizer.process_conversation,

@@ -1,11 +1,10 @@
+from typing import Optional
 from fastapi import HTTPException
 import whisper
 from gtts import gTTS
 from datetime import datetime
 import chromadb
 from database import ConversationDatabase
-from haystack.components.embedders import OpenAITextEmbedder
-from haystack_integrations.document_stores.chroma.document_store import ChromaDocumentStore
 import uuid
 
 async def convert_audio_to_text(audio_path: str) -> str:
@@ -35,24 +34,23 @@ async def convert_text_to_speech(answer: str) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating speech: {str(e)}")
 
-def save_conversation(user_input: str, ai_response: dict, embedder: OpenAITextEmbedder, user_name: str, conversation_count_threshold: int) -> int:
+def save_conversation(data: dict, new_conv: Optional[bool] = False) -> int:
     """
     Save conversation to SQLite and non-question inputs to ChromaDB with embeddings
     """
     try:
-        chroma_client = chromadb.PersistentClient(path="data/databases/chroma_db")
-        collection = chroma_client.get_or_create_collection(name="conversations")
-        
-
         # Saving in SQLite
         conversation_db = ConversationDatabase()
-        full_response = ai_response["answer"] + f"\n\nSource Link: {ai_response['url']}" if ai_response['url'] is not None else ai_response["answer"]
-        _, conversation_count = conversation_db.save_conversation(user_input, full_response, conversation_count_threshold)
+        full_response = data["ai_response"]["answer"] + f"\n\nSource Link: {data['ai_response']['url']}" if data['ai_response']['url'] is not None else data['ai_response']['answer']
+        conversation_count = conversation_db.save_conversation(data["user_input"], full_response, data["conv_count_threshold"], new_conv)
         
         # Saving in ChromaDB
-        if ai_response["prompt_type"] == 'statement':
-            conversation_text = f"{user_name}: {user_input}"
-            embedding = embedder.run(conversation_text)
+        chroma_client = chromadb.PersistentClient(path="data/databases/chroma_db")
+        collection = chroma_client.get_or_create_collection(name="conversations")
+
+        if data["ai_response"]["prompt_type"] == 'statement':
+            conversation_text = f"{data['user_name']}: {data['user_input']}"
+            embedding = data["embedder"].run(conversation_text)
             
             document = {
                 "id": str(uuid.uuid4()),
