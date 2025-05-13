@@ -58,7 +58,7 @@ python process_audio.py
 
 - POST `/process_audio`: Process audio input and get AI response
   - Accepts: Audio file (any format)
-  - Returns: Transcription, AI response, and audio response
+  - Returns: Transcription, Prompt type, AI response, and audio response
 
 ## Project Structure
 
