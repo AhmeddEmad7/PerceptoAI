@@ -46,6 +46,7 @@ PROMPT_TEMPLATE = """
                  - Respond with 'use_weather_tool'
 
               d) Web Search Queries:
+                 - Trigger for general knowledge, internet or web search
                  - STRICT Conditions:
                    * ONLY for truly general knowledge
                    * Completely unrelated to personal context
