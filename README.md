@@ -5,7 +5,7 @@ PerceptoAI is a smart AI assistant powered by a Raspberry Pi that uses voice inp
 ## Features
 
 - Voice-to-text transcription using Speech-to-Text API
-- Context-aware responses using DeepSeek API
+- Context-aware responses using OpenAI API
 - Text-to-speech conversion for AI responses
 - Local conversation storage with SQLite
 - Vector-based memory storage using ChromaDB
@@ -24,11 +24,16 @@ pip install -r requirements.txt
 
 2. Fill in your API keys in `.env` :
 ```bash
-echo "DEEPSEEK_API_KEY=<deepseek_api_key>" >> .env
-```
-OR
-```bash
 echo "OPENAI_API_KEY=<openai_api_key>" >> .env
+```
+```bash
+echo "GOOGLE_MAPS_API_KEY=<google_maps_api_key>" >> .env
+```
+```bash
+echo "SERP_API_KEY=<serp_api_key>" >> .env
+```
+```bash
+echo "WEATHER_API_KEY=<weather_api_key>" >> .env
 ```
 
 3. Add user facts to ChromaDB:

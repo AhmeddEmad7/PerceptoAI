@@ -26,7 +26,7 @@ class RAGPipeline:
         self.weather_retriever = WeatherRetriever(api_key=os.getenv('WEATHER_API_KEY'))
         self.location_retriever = LocationRetriever(api_key=os.getenv('GOOGLE_MAPS_API_KEY'))
         self.datetime_retriever = DateTimeRetriever(api_key=os.getenv('WEATHER_API_KEY'))
-        self.web_search = SerpAPIWebSearch(api_key=os.getenv('SERPAPI_KEY'))
+        self.web_search = SerpAPIWebSearch(api_key=os.getenv('SERP_API_KEY'))
         self.router = ConditionalRouter(routes=self.routes)
 
         self.pipeline = Pipeline()
