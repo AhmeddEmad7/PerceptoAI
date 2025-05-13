@@ -82,8 +82,14 @@ class DateTimeRetriever:
 
     @component.output_types(datetime=dict)
     def run(self, query: str) -> dict:
-        match = re.search(r"(?:time|date).*?(?:in|at|for)\s+([a-zA-Z\s]+)", query, re.IGNORECASE)
-        location = match.group(1).strip().title() if match else "Cairo"
+        match = re.search(r"(?:date|time).*?(?:in|at|for)\s+([a-zA-Z\s]+)", query, re.IGNORECASE)
+        extracted = match.group(1).strip() if match else ""
+
+        filler_terms = {"time", "date", "today", "now", "it", "is", "this", ""}
+        if extracted.lower() in filler_terms:
+            location = "Cairo" 
+        else:
+            location = extracted.title() 
 
         url = f"http://api.weatherapi.com/v1/timezone.json?key={self.api_key}&q={location}"
         response = requests.get(url)
@@ -108,12 +114,11 @@ class DateTimeRetriever:
                 parts.append(f"the time is {time_part}")
 
             joined = " and ".join(parts)
-            content = (
-                f"In {location_name}, {country}, {joined}."
-            )
+            content = f"In {location_name}, {country}, {joined}."
+
             result = {'content': content, 'url': "https://www.weatherapi.com/"}
         else:
-            result = {'content': "", 'url': ""}
+            result = {'content': "Sorry, I couldn't retrieve the time.", 'url': ""}
 
         return result
 
@@ -124,22 +129,25 @@ class WeatherRetriever:
 
     @component.output_types(weather=dict)
     def run(self, query: str) -> dict:
-        # More comprehensive location detection for weather queries
         location_patterns = [
-            r"(?:weather\s.*?(?:in|at|for)\s)([a-zA-Z\s]+)",  # Original pattern
-            r"(?:how\s+(?:hot|cold)\s+(?:is\s+it\s+)?(?:in\s+)?)?([a-zA-Z\s]+)",  # Catch "how cold is it in Berlin"
-            r"(?:temperature\s+(?:in\s+)?)?([a-zA-Z\s]+)",  # Catch "temperature in Berlin"
-            r"(?:what\'s?\s+the\s+weather\s+(?:like\s+)?(?:in\s+)?)?([a-zA-Z\s]+)",  # Catch "what's the weather like in"
+            r"(?:in|at|for)\s+([a-zA-Z\s]+)", 
         ]
         
         location = None
         for pattern in location_patterns:
             match = re.search(pattern, query, re.IGNORECASE)
             if match:
-                location = match.group(1).strip().title()
-                break
-        
-        location = location or "Cairo"
+                extracted = match.group(1).strip()
+                if len(extracted) > 2 and extracted.lower() not in ["it", "is", "today", "now"]:
+                    location = extracted.title()
+                    break
+
+        if not location:
+            try:
+                ip_data = requests.get("http://ip-api.com/json/").json()
+                location = ip_data.get("city", "Cairo")
+            except:
+                location = "Cairo"  
 
         url = f"http://api.weatherapi.com/v1/current.json?key={self.api_key}&q={location}"
         response = requests.get(url)
@@ -160,14 +168,22 @@ class WeatherRetriever:
             )
             result = {'content': content, 'url': "https://www.weatherapi.com/"}
         else:
-            result = {'content': "", 'url': ""}
+            result = {'content': "I'm sorry, I couldn't retrieve the weather right now.", 'url': ""}
 
         return result
+
+import requests
 
 @component
 class SerpAPIWebSearch:
     def __init__(self, api_key: str):
         self.api_key = api_key
+
+    def truncate_text(self, text: str) -> str:
+        """Truncate the text after the first period."""
+        if '.' in text:
+            return text.split('.', 1)[0] + '.'
+        return text
 
     @component.output_types(web_documents=dict)
     def run(self, query: str) -> dict:
@@ -180,8 +196,8 @@ class SerpAPIWebSearch:
             for result in search_results.get('organic_results', [])[:2]:
                 snippet = result.get('snippet', 'No snippet available')
                 link = result.get('link', '')
-                content = snippet
-                documents.append({'content': content, 'url': link})
+                truncated_content = self.truncate_text(snippet)
+                documents.append({'content': truncated_content, 'url': link})
         else:
             documents.append({
                 'content': "",
@@ -189,4 +205,3 @@ class SerpAPIWebSearch:
             })
 
         return {"web_documents": documents}
-
