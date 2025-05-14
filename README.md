@@ -4,12 +4,21 @@ PerceptoAI is a smart AI assistant powered by a Raspberry Pi that uses voice inp
 
 ## Features
 
+### Core AI Capabilities
 - Voice-to-text transcription using Speech-to-Text API
 - Context-aware responses using OpenAI API
 - Text-to-speech conversion for AI responses
+
+### Context and Information Retrieval
+- **Location** tool with Google Maps and OpenStreetMap integration for accurate location information
+- **Date and Time** tool for accurate time zones and date
+- **Weather** tool providing real-time location-based weather information
+- **Web Search** tool for internet search and context-aware information gathering
+
+### Data Management and Infrastructure
 - Local conversation storage with SQLite
 - Vector-based memory storage using ChromaDB
-- Custom components for weather, location, date-time, and web search
+- Conversations clustering and summarization
 - FastAPI backend service
 
 ## RAG Pipeline:
