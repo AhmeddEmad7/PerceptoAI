@@ -66,7 +66,7 @@ python process_audio.py
 - GET `/`: Returns a message that server is running
 
 - POST `/process_audio`: Process audio input and get AI response
-  - Accepts: Audio file (any format)
+  - Accepts: Audio file (any format), New conversation creation flag
   - Returns: Transcription, Prompt type, AI response, and audio response
 
 ## Project Structure
