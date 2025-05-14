@@ -107,4 +107,8 @@ python process_audio.py
 - **SoundDevice**: Audio input recording
 - **Whisper**: Speech-to-text transcription
 - **gTTS**: Text-to-speech conversion
+- **Google Maps & Nominatim**: For location retrieval
+- **WeatherAPI**: For weather and date-time retrievals
+- **SerpAPI**: For web-based search and retrieval
+
 
