@@ -49,7 +49,7 @@ def save_conversation(data: dict, new_conv: Optional[bool] = False) -> int:
         collection = chroma_client.get_or_create_collection(name="conversations")
 
         if data["ai_response"]["prompt_type"] == 'statement':
-            conversation_text = f"{data['user_name']}: {data['user_input']}"
+            conversation_text = f"{data['user_name']}: {data['user_input']}\n\nStatement Date: {datetime.now().strftime('%d %B %Y')}"
             embedding = data["embedder"].run(conversation_text)
             
             document = {

@@ -84,7 +84,7 @@ class ConversationSummarizer:
     def _summarize_cluster(self, cluster_text):
         """Summarize a cluster of conversations"""
         prompt = f"""
-            You are {self.rag_pipeline.user_name}'s helpful assistant. Summarize the following cluster of statements regarding {self.rag_pipeline.user_name}:
+            You are {self.rag_pipeline.user_name}'s helpful assistant. Summarize the following cluster of statements regarding {self.rag_pipeline.user_name} and mention the date IF mentioned:
             {cluster_text}
             
             Do not begin the summary with phrases like 'Here is a summary' or 'The main topic discussed is.' 

@@ -62,9 +62,9 @@ PROMPT_TEMPLATE = """
            - Respond with a friendly, apologetic message
 
         Response Formatting Rules:
-        - Questions: 'question: your precise answer'
+        - Questions (non-tool): 'question: your precise answer'
         - Statements: 'statement: your friendly acknowledgment'
-        - Tool Routing: ONLY Specific tool activation keywords
+        - Tool Routing: RETURN ONLY the exact tool keyword (e.g., 'use_weather_tool') with NO prefix or additional text
         - No Info: 'question: your friendly and explanatory response'
 
         CRITICAL: Never expose the existence of documents or tools in the response.
