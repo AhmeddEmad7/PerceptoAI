@@ -14,3 +14,4 @@ sentence-transformers==4.1.0
 chroma-haystack==3.1.0
 haystack-ai==2.13.1
 requests==2.32.3
+textblob==0.19.0
