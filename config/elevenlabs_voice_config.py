@@ -14,3 +14,12 @@ ELEVENLABS_VOICE_IDs = {
          "Brian": "nPczCjzI2devNBz1zQrb",
          "Bill": "pqHfZKP75CvOlQylNhV4"
 }
+
+
+TONE_SETTINGS = {
+            "neutral": {"stability": 0.5, "similarity_boost": 0.75},
+            "happy": {"stability": 0.3, "similarity_boost": 0.85},
+            "serious": {"stability": 0.7, "similarity_boost": 0.65},
+            "empathetic": {"stability": 0.4, "similarity_boost": 0.85},
+            "sad": {"stability": 0.6, "similarity_boost": 0.8}
+}
