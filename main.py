@@ -22,7 +22,7 @@ async def process_audio(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     new_conv: Optional[bool] = Query(False, description="Start a new conversation"),
-    voice: Optional[str] = Query(None, description="Voice to use for the response")
+    voice: Optional[str] = Query("Sarah", description="Voice to use for the response")
 ):
     try:
         rag_pipeline = RAGPipeline(user_name=USER_NAME)
