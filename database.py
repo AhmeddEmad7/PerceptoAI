@@ -1,153 +1,136 @@
-import sqlite3
+from sqlalchemy import (
+    ForeignKey,
+    create_engine,
+    Column,
+    Integer,
+    String,
+    DateTime,
+    func,
+)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 from typing import List, Dict, Optional
+from datetime import datetime
+
+Base = declarative_base()
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=True, default=None)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    messages = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan"
+    )
+
+
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
+    user_input = Column(String, nullable=False)
+    ai_response = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    conversation = relationship("Conversation", back_populates="messages")
+
 
 class ConversationDatabase:
-    def __init__(self, db_path: str = "data/databases/conversations.db"):
-        self.db_path = db_path
-        self._initialize_database()
-
-    def _initialize_database(self):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS conversations (
-                    conversation_id INTEGER,
-                    message_id INTEGER,
-                    user_input TEXT NOT NULL,
-                    ai_response TEXT NOT NULL,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (conversation_id, message_id)
-                )
-            ''')
-            
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS conversation_count (
-                    id INTEGER PRIMARY KEY,
-                    count INTEGER NOT NULL,
-                    last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            cursor.execute('''
-                INSERT OR IGNORE INTO conversation_count (id, count)
-                VALUES (1, 0)
-            ''')
-            conn.commit()
+    def __init__(self, db_path: str = "sqlite:///data/databases/conversations.db"):
+        self.engine = create_engine(db_path, echo=False)
+        Base.metadata.create_all(self.engine)
+        self.Session = sessionmaker(bind=self.engine)
 
     def start_new_conversation(self) -> int:
-        """Start a new conversation and return the conversation ID."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT COALESCE(MAX(conversation_id), 0) + 1 FROM conversations')
-            new_conversation_id = cursor.fetchone()[0]
-            conn.commit()
-            return new_conversation_id
+        """Start a new conversation and return its ID."""
+        with self.Session() as session:
+            conversation = Conversation()
+            session.add(conversation)
+            session.commit()
+            return conversation.id
 
-    def save_conversation(self, user_input: str, ai_response: str, conv_count_threshold: int, new_conv: Optional[bool] = False) -> (int, int):
-        """Save a conversation to the database and return the conversation ID."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-
-            if new_conv:
+    def save_message(
+        self, user_input: str, ai_response: str, conversation_id: Optional[int] = None
+    ) -> int:
+        """Save a message to a conversation and return the conversation ID."""
+        with self.Session() as session:
+            if conversation_id is None:
                 conversation_id = self.start_new_conversation()
-            else:
-                cursor.execute('''
-                SELECT COALESCE(MAX(conversation_id), 1) 
-                FROM conversations 
-                ''')
-                conversation_id = cursor.fetchone()[0]
-                
-            cursor.execute('''
-                SELECT COALESCE(MAX(message_id), 0) + 1 
-                FROM conversations 
-                WHERE conversation_id = ?
-            ''', (conversation_id,))
-            message_id = cursor.fetchone()[0]
-            
-            cursor.execute('''
-                INSERT INTO conversations (conversation_id, message_id, user_input, ai_response)
-                VALUES (?, ?, ?, ?)
-            ''', (conversation_id, message_id, user_input, ai_response))
-            conn.commit()
 
-            self.increment_conversation_count()
-            processed_conversations_count = self.get_conversation_count()
-            
-            if(processed_conversations_count >= conv_count_threshold):
-                self.reset_conversation_count()
+            message = Message(
+                conversation_id=conversation_id,
+                user_input=user_input,
+                ai_response=ai_response,
+            )
+            session.add(message)
+            session.commit()
 
-            return processed_conversations_count
+            return conversation_id
 
-    def get_messages_from_conversation(self, conversation_id: int, limit: int = 100) -> List[Dict]:
-        """Get conversations, optionally filtered by conversation ID."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT conversation_id, user_input, ai_response, timestamp
-                FROM conversations
-                WHERE conversation_id = ?
-                ORDER BY timestamp DESC
-                LIMIT ?
-                ''', (conversation_id, limit))
-            
-            rows = cursor.fetchall()
-            return [{
-                "conversation_id": row[0],
-                "user_input": row[1],
-                "ai_response": row[2],
-                "timestamp": row[3]
-            } for row in rows]
-    
-    def get_message_by_id(self, conversation_id: int, message_id: int) -> Optional[Dict]:
-        """Get a specific conversation by ID."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT conversation_id, message_id, user_input, ai_response, timestamp
-                FROM conversations
-                WHERE conversation_id = ? AND message_id = ?
-            ''', (conversation_id, message_id))
-            row = cursor.fetchone()
-            if row:
+    def get_messages_from_conversation(
+        self, conversation_id: int, limit: int = 100
+    ) -> List[Dict]:
+        """Retrieve messages from a specific conversation, ordered by timestamp."""
+        with self.Session() as session:
+            messages = (
+                session.query(Message)
+                .filter_by(conversation_id=conversation_id)
+                .order_by(Message.timestamp.desc())
+                .limit(limit)
+                .all()
+            )
+            return [
+                {
+                    "conversation_id": msg.conversation_id,
+                    "message_id": msg.id,
+                    "user_input": msg.user_input,
+                    "ai_response": msg.ai_response,
+                    "timestamp": msg.timestamp.isoformat(),
+                }
+                for msg in messages
+            ]
+
+    def get_message_by_id(
+        self, conversation_id: int, message_id: int
+    ) -> Optional[Dict]:
+        """Retrieve a specific message by its ID and conversation ID."""
+        with self.Session() as session:
+            message = (
+                session.query(Message)
+                .filter_by(id=message_id, conversation_id=conversation_id)
+                .first()
+            )
+            if message:
                 return {
-                    "conversation_id": row[0],
-                    "message_id": row[1],
-                    "user_input": row[2],
-                    "ai_response": row[3],
-                    "timestamp": row[4]
+                    "conversation_id": message.conversation_id,
+                    "message_id": message.id,
+                    "user_input": message.user_input,
+                    "ai_response": message.ai_response,
+                    "timestamp": message.timestamp.isoformat(),
                 }
             return None
 
     def get_conversation_count(self) -> int:
-        """Get the current conversation count."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT count FROM conversation_count WHERE id = 1
-            ''')
-            result = cursor.fetchone()
-            return result[0] if result else 0
+        """Get the total number of conversations."""
+        with self.Session() as session:
+            return session.query(func.count(Conversation.id)).scalar()
 
-    def increment_conversation_count(self):
-        """Increment the conversation count and return the new value."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE conversation_count 
-                SET count = count + 1, 
-                    last_updated = CURRENT_TIMESTAMP
-                WHERE id = 1
-            ''')
-            conn.commit()
-    
-    def reset_conversation_count(self):
-        """Reset the conversation count."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE conversation_count 
-                SET count = 0, 
-                    last_updated = CURRENT_TIMESTAMP
-                WHERE id = 1
-            ''')
-            conn.commit()
+    def get_latest_conversation_id(self) -> Optional[int]:
+        """Get the ID of the latest conversation."""
+        with self.Session() as session:
+            latest_conversation = (
+                session.query(Conversation)
+                .order_by(Conversation.created_at.desc())
+                .first()
+            )
+            return latest_conversation.id if latest_conversation else None
+
+    def update_conversation_title(self, conversation_id: int, title: str) -> bool:
+        """Update the title of a conversation."""
+        with self.Session() as session:
+            conversation = session.query(Conversation).get(conversation_id)
+            if conversation:
+                conversation.title = title
+                session.commit()
+                return True
+            return False
