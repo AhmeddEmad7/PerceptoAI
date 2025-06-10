@@ -1,11 +1,20 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from typing import Optional
 from fastapi import HTTPException
 import whisper
-from gtts import gTTS
+from elevenlabs.client import ElevenLabs
+from dotenv import load_dotenv
 from datetime import datetime
 import chromadb
 from database import ConversationDatabase
 import uuid
+from config.voice_ids import ELEVENLABS_VOICE_IDs
+
+load_dotenv()
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
 async def convert_audio_to_text(audio_path: str) -> str:
     """
@@ -20,14 +29,26 @@ async def convert_audio_to_text(audio_path: str) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(e)}")
 
-async def convert_text_to_speech(answer: str) -> str:
+async def convert_text_to_speech(answer: str, voice_name: str = "Sarah") -> str:
     """
-    Convert text to speech using gTTS (Google Text-to-Speech)
+    Convert text to speech using ElevenLabs
     """
     try:
-        tts = gTTS(text=answer, lang='en', slow=False, tld='fr')
+        if not ELEVENLABS_API_KEY:
+            raise HTTPException(status_code=500, detail="ELEVENLABS_API_KEY not found in .env file")
+
+        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+
+        audio = client.text_to_speech.convert(
+            text=answer,
+            voice_id=ELEVENLABS_VOICE_IDs[voice_name],
+            model_id="eleven_multilingual_v2"
+        )
+        
         output_path = f"data/model_outputs/output_{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp3"
-        tts.save(output_path)
+        with open(output_path, "wb") as f:
+            for chunk in audio:
+                f.write(chunk)
         
         return output_path
 
