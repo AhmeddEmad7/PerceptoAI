@@ -1,10 +1,9 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from typing import Optional
 from fastapi import HTTPException
 import whisper
+# from gtts import gTTS
 from elevenlabs.client import ElevenLabs
 from dotenv import load_dotenv
 from datetime import datetime
@@ -15,7 +14,7 @@ from textblob import TextBlob
 from config.elevenlabs_voice_config import ELEVENLABS_VOICE_IDs, TONE_SETTINGS
 
 load_dotenv()
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 async def convert_audio_to_text(audio_path: str) -> str:
     """
@@ -34,9 +33,8 @@ async def convert_text_to_speech(answer: str, prompt: str = None, voice_name: st
     """
     Convert text to speech using ElevenLabs with basic tone adjustment based on sentiment.
     """
-
     try:
-        if not ELEVENLABS_API_KEY:
+        if not os.getenv("ELEVENLABS_API_KEY"):
             raise HTTPException(status_code=500, detail="ELEVENLABS_API_KEY not found in .env file")
 
         tone = "neutral"
@@ -55,8 +53,7 @@ async def convert_text_to_speech(answer: str, prompt: str = None, voice_name: st
                 tone = "empathetic"
 
         voice_id = ELEVENLABS_VOICE_IDs[voice_name]
-
-        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+        client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
         
         audio = client.text_to_speech.convert(
             text=answer,

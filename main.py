@@ -21,7 +21,8 @@ async def root():
 async def process_audio(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
-    new_conv: Optional[bool] = Query(False, description="Start a new conversation")
+    new_conv: Optional[bool] = Query(False, description="Start a new conversation"),
+    voice: Optional[str] = Query(None, description="Voice to use for the response")
 ):
     try:
         rag_pipeline = RAGPipeline(user_name=USER_NAME)
@@ -34,7 +35,7 @@ async def process_audio(
             
             prompt = await convert_audio_to_text(temp_file.name)
             response = rag_pipeline.process_query(prompt)
-            audio_response = await convert_text_to_speech(response["answer"], prompt, "Sarah")
+            audio_response = await convert_text_to_speech(response["answer"], prompt, voice)
         
             conversation_count = save_conversation({
                 "user_input": prompt,
