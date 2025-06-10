@@ -134,3 +134,16 @@ class ConversationDatabase:
                 session.commit()
                 return True
             return False
+
+    def get_conversations(self) -> List[Dict]:
+        """Retrieve all conversations with their IDs and titles."""
+        with self.Session() as session:
+            conversations = session.query(Conversation).all()
+            return [
+                {
+                    "id": conv.id,
+                    "title": conv.title,
+                    "created_at": conv.created_at.isoformat(),
+                }
+                for conv in conversations
+            ]

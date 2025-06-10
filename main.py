@@ -1,6 +1,7 @@
 import io
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
+from database import ConversationDatabase
 from services import (
     convert_audio_to_text,
     convert_text_to_speech,
@@ -14,9 +15,18 @@ from rag_config import USER_NAME, CONVERSATION_COUNT_THRESHOLD
 from typing import Optional
 from fastapi import Query
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 app = FastAPI(title="PerceptoAI RAG Pipeline")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -93,6 +103,30 @@ async def process_audio(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+
+
+@app.get("/conversations")
+async def get_conversations():
+    try:
+        conversations_db = ConversationDatabase()
+        return conversations_db.get_conversations()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching conversations: {str(e)}"
+        )
+
+
+@app.get("/conversations/{conversation_id}")
+async def get_conversation_messages(
+    conversation_id: int,
+):
+    try:
+        conversations_db = ConversationDatabase()
+        return conversations_db.get_messages_from_conversation(conversation_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching conversation: {str(e)}"
+        )
 
 
 if __name__ == "__main__":
