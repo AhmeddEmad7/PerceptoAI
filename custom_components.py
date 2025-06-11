@@ -142,6 +142,7 @@ class DateTimeRetriever:
 
         return result
 
+
 @component
 class WeatherRetriever:
     def __init__(self, api_key: str):
@@ -166,28 +167,52 @@ class WeatherRetriever:
             try:
                 ip_data = requests.get("http://ip-api.com/json/").json()
                 location = ip_data.get("city", "Cairo")
-            except:
-                location = "Cairo"  
+            except Exception as e:
+                print(f"IP location error: {str(e)}")
+                location = "Cairo"
 
-        url = f"http://api.weatherapi.com/v1/current.json?key={self.api_key}&q={location}"
-        response = requests.get(url)
+        print(f"Fetching weather for location: {location}")
+        url = f"https://api.weatherapi.com/v1/current.json?key={self.api_key}&q={location}"
+        try:
+            response = requests.get(url)
+            print(f"Weather API response status: {response.status_code}")
+            if response.status_code == 200:
+                data = response.json()
+                location_name = data['location']['name']
+                country = data['location']['country']
+                condition = data['current']['condition']['text']
+                temp_c = data['current']['temp_c']
+                humidity = data['current']['humidity']
+                wind_kph = data['current']['wind_kph']
 
-        if response.status_code == 200:
-            data = response.json()
-            location_name = data['location']['name']
-            country = data['location']['country']
-            condition = data['current']['condition']['text']
-            temp_c = data['current']['temp_c']
-            humidity = data['current']['humidity']
-            wind_kph = data['current']['wind_kph']
+                # Verbalize numbers
+                temp_c_int = int(temp_c)
+                temp_c_dec = int((temp_c - temp_c_int) * 10)
+                temp_text = num2words(temp_c_int, lang='en')
+                if temp_c_dec > 0:
+                    temp_dec_text = num2words(temp_c_dec, lang='en')
+                    temp_text += f" and {temp_dec_text} tenths"
+                humidity_text = num2words(humidity, lang='en')
+                wind_kph_int = int(wind_kph)
+                wind_kph_dec = int((wind_kph - wind_kph_int) * 10)
+                wind_text = num2words(wind_kph_int, lang='en')
+                if wind_kph_dec > 0:
+                    wind_dec_text = num2words(wind_kph_dec, lang='en')
+                    wind_text += f" and {wind_dec_text} tenths"
 
-            content = (
-                f"The current weather in {location_name}, {country} is {condition} "
-                f"with a temperature of {temp_c}°C, humidity at {humidity}%, "
-                f"and wind speed of {wind_kph} kph."
-            )
-            result = {'content': content, 'url': "https://www.weatherapi.com/"}
-        else:
+                content = (
+                    f"The current weather in {location_name}, {country} is {condition} "
+                    f"with a temperature of {temp_text} degrees Celsius, "
+                    f"humidity at {humidity_text} percent, "
+                    f"and wind speed of {wind_text} kilometers per hour."
+                )
+                result = {'content': content, 'url': "https://www.weatherapi.com/"}
+            else:
+                error_message = response.json().get('error', {}).get('message', 'Unknown error')
+                print(f"Weather API error: {error_message}")
+                result = {'content': "I'm sorry, I couldn't retrieve the weather right now.", 'url': ""}
+        except Exception as e:
+            print(f"Weather API request error: {str(e)}")
             result = {'content': "I'm sorry, I couldn't retrieve the weather right now.", 'url': ""}
 
         return result
