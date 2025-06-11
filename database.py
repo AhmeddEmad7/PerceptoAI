@@ -35,11 +35,23 @@ class Message(Base):
     conversation = relationship("Conversation", back_populates="messages")
 
 
+class Settings(Base):
+    __tablename__ = "settings"
+    key = Column(String, primary_key=True)
+    value = Column(String, nullable=False)
+
+
 class ConversationDatabase:
     def __init__(self, db_path: str = "sqlite:///data/databases/conversations.db"):
         self.engine = create_engine(db_path, echo=False)
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
+
+        with self.Session() as session:
+            if not session.query(Settings).filter_by(key="current_voice").first():
+                default_setting = Settings(key="current_voice", value="Sarah")
+                session.add(default_setting)
+                session.commit()
 
     def start_new_conversation(self) -> int:
         """Start a new conversation and return its ID."""
@@ -147,3 +159,20 @@ class ConversationDatabase:
                 }
                 for conv in conversations
             ]
+
+    def get_current_voice(self) -> str:
+        """Retrieve the current voice from the settings table."""
+        with self.Session() as session:
+            setting = session.query(Settings).filter_by(key="current_voice").first()
+            return setting.value if setting else "Sarah"
+
+    def update_current_voice(self, voice: str) -> None:
+        """Update the current voice in the settings table."""
+        with self.Session() as session:
+            setting = session.query(Settings).filter_by(key="current_voice").first()
+            if setting:
+                setting.value = voice
+            else:
+                setting = Settings(key="current_voice", value=voice)
+                session.add(setting)
+            session.commit()

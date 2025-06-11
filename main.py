@@ -39,7 +39,6 @@ async def process_audio(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     new_conv: Optional[bool] = Query(False, description="Start a new conversation"),
-    voice: Optional[str] = Query("Sarah", description="Voice to use for the response"),
 ):
     try:
         rag_pipeline = RAGPipeline(user_name=USER_NAME)
@@ -63,7 +62,10 @@ async def process_audio(
             audio_buffer, file_ext[1:]
         )  # Pass file extension
         response = rag_pipeline.process_query(prompt)
-        audio_response = await convert_text_to_speech(response["answer"], prompt, voice)
+        conversations_db = ConversationDatabase()
+        audio_response = await convert_text_to_speech(
+            response["answer"], prompt, conversations_db.get_current_voice()
+        )
 
         conversations_data = save_conversation(
             {
@@ -103,6 +105,28 @@ async def process_audio(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+
+
+@app.get("/voice")
+def get_voice():
+    conversations_db = ConversationDatabase()
+    return {"voice": conversations_db.get_current_voice()}
+
+
+@app.put("/voice")
+def update_voice(voice: str):
+    if not voice:
+        raise HTTPException(status_code=400, detail="Voice cannot be empty")
+
+    allowed_voices = ["Bella", "Antoni", "Elli", "Josh", "Sarah", "Brian"]
+    if voice not in allowed_voices:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid voice. Allowed voices: {allowed_voices}"
+        )
+
+    conversations_db = ConversationDatabase()
+    conversations_db.update_current_voice(voice)
+    return {"message": f"Voice updated to {voice}"}
 
 
 @app.get("/conversations")

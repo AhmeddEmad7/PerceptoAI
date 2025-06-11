@@ -3,43 +3,53 @@ export interface Voice {
   name: string;
   audioPath: string;
   description?: string;
+  isArabic?: boolean;
+  background: string;
 }
 
 export const voices: Voice[] = [
   {
-    id: 'echo',
-    name: 'ECHO',
-    audioPath: '/voices/ECHO.mp3',
-    description: 'A clear and resonant voice with natural echo characteristics'
+    id: 'Bella',
+    name: 'Bella',
+    audioPath: '/voices/Bella.mp3',
+    description: 'A clear and resonant voice with natural echo characteristics',
+    background: 'linear-gradient(to right, #ff758c, #ff7eb3)',
   },
   {
-    id: 'nebula',
-    name: 'Nebula',
-    audioPath: '/voices/Nebula.mp3',
-    description: 'A mysterious and ethereal voice with cosmic undertones'
+    id: 'Antoni',
+    name: 'Antoni',
+    audioPath: '/voices/Antoni.mp3',
+    description: 'A mysterious and ethereal voice with cosmic undertones',
+    background: 'linear-gradient(to right, #6a11cb, #2575fc)',
   },
   {
-    id: 'astra',
-    name: 'ASTRA',
-    audioPath: '/voices/ASTRA.mp3',
-    description: 'A bright and celestial voice with stellar qualities'
+    id: 'Elli',
+    name: 'Elli',
+    audioPath: '/voices/Elli.mp3',
+    description: 'A bright and celestial voice with stellar qualities',
+    background: 'linear-gradient(to right, #00c6ff, #0072ff)',
   },
   {
-    id: 'orion',
-    name: 'Orion',
-    audioPath: '/voices/Orion.mp3',
-    description: 'A bold and powerful voice with cosmic energy'
+    id: 'Josh',
+    name: 'Josh',
+    audioPath: '/voices/Josh.mp3',
+    description: 'A bold and powerful voice with cosmic energy',
+    background: 'linear-gradient(to right, #ff8c42, #ff5733)',
   },
   {
-    id: 'nova',
-    name: 'NOVA',
-    audioPath: '/voices/NOVA.mp3',
-    description: 'A dynamic and explosive voice with stellar brilliance'
+    id: 'Sarah',
+    name: 'Sarah',
+    audioPath: '/voices/Sarah.mp3',
+    description: 'A dynamic and explosive voice with stellar brilliance',
+    isArabic: true,
+    background: 'linear-gradient(to right, #6a11cb, #2575fc)',
   },
   {
-    id: 'quantum',
-    name: 'Quantum',
-    audioPath: '/voices/Quantum.mp3',
-    description: 'A precise and calculated voice with quantum properties'
-  }
-]; 
+    id: 'Brian',
+    name: 'Brian',
+    audioPath: '/voices/Brian.mp3',
+    description: 'A precise and calculated voice with Brian properties',
+    isArabic: true,
+    background: 'linear-gradient(to right, #00c6ff, #0072ff)',
+  },
+];
