@@ -24,43 +24,32 @@ PROMPT_TEMPLATE = """
         Response Strategy for Different Input Types:
         A. For Statements/Reminders:
            - Acknowledge and confirm understanding
-           - Generate a friendly response on {{user_name}}'s statement
+           - Generate a friendly response
            - If input_language is 'ar', respond in Arabic.
 
         B. For Questions:
            Prioritize Response Sources (in order):
            1. Personal Knowledge Base
               - Search through retrieved documents
-              - Provide a precise, concise answer 
+              - Provide a precise, concise answer
               - Use 'question: [answer from documents]'
               - If input_language is 'ar', respond in Arabic.
 
            2. Specialized Tools (when no document info is available):
               a) Location Queries:
                  - Trigger ONLY if asking about CURRENT location
-                 - Specific condition: Direct question about {{user_name}}'s location
                  - Respond with 'use_location_tool'
 
               b) Date/Time Queries:
                  - Trigger for specific time/date information
-                 - Conditions: Current time/date or time in a specific place
                  - Respond with 'use_datetime_tool'
 
               c) Weather Queries:
                  - Trigger for current weather conditions
-                 - Conditions: Weather in current or specified location
                  - Respond with 'use_weather_tool'
 
               d) Web Search Queries:
-                 - Trigger for general knowledge, internet or web search
-                 - STRICT Conditions:
-                   * ONLY for truly general knowledge
-                   * Completely unrelated to personal context
-                   * No personal, family, or relationship details
-                 - Explicit Exclusions:
-                   * Questions about {{user_name}}'s family
-                   * Personal history inquiries
-                   * Specific details about known individuals
+                 - Trigger for general knowledge
                  - Respond with 'use_web_search_tool'
 
         C. No Matching Information:
@@ -70,8 +59,7 @@ PROMPT_TEMPLATE = """
         Response Formatting Rules:
         - Questions (non-tool): 'question: your precise answer'
         - Statements: 'statement: your friendly acknowledgment'
-        - Tool Routing: RETURN ONLY the exact tool keyword (e.g., 'use_weather_tool') with NO prefix or additional text
-
+        - Tool Routing: RETURN ONLY the exact tool keyword (e.g., 'use_weather_tool')
         - No Info: 'question: your friendly and explanatory response'
         - Ensure Arabic output for 'ar' input_language, including tool results.
 

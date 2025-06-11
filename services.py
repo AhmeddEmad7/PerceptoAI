@@ -180,52 +180,29 @@ async def create_conversation_title(
     conversation_id: int, user_message: str, ai_response: str
 ) -> str:
     """
-    Create a conversation title based on user input and AI response.
-
-    Args:
-        conversation_id (int): The ID of the conversation in the database.
-        user_message (str): The user's input message.
-        ai_response (str): The AI's response to the user's message.
-
-    Returns:
-        str: The generated conversation title.
-
-    Raises:
-        HTTPException: If title generation or database update fails.
+    Create a concise title for a conversation based on the user input and AI response.
     """
     try:
-        # Initialize OpenAI generator
         generator = OpenAIGenerator(model="gpt-4o-mini")
 
-        # Define a simple prompt for title generation
-        prompt_template = """
-        Create a concise conversation title (max 50 characters) based on the following user message and AI response. Only return the title, don't return any other text.
-        User message: {{ user_message }}
-        AI response: {{ ai_response }}
-        """
-
-        # Build the prompt
-        prompt = prompt_template.replace("{{ user_message }}", user_message).replace(
-            "{{ ai_response }}", ai_response
+        prompt = (
+            "Create a concise conversation title (max 50 characters) "
+            "based on the following user message and AI response. "
+            "Only return the title, don't return any other text.\n"
+            f"User message: {user_message}\n"
+            f"AI response: {ai_response}"
         )
 
-        # Generate the title
         result = generator.run(prompt)
-        title = result["replies"][0].strip()
+        title = result["replies"][0].strip()[:50]  # Ensure max 50 characters
 
-        # Ensure title is within 50 characters
-        title = title[:50]
-
-        # Update the conversation title in the database
         conversation_db = ConversationDatabase()
-        conversation_db.update_conversation_title(
-            conversation_id=conversation_id,
-            title=title,
-        )
+        conversation_db.update_conversation_title(conversation_id, title)
 
         return title
 
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Error creating conversation title: {str(e)}"
+            status_code=500,
+            detail=f"Error creating conversation title: {str(e)}"
         )
