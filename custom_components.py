@@ -1,6 +1,7 @@
 from haystack import component
 import requests
 import re
+from num2words import num2words
 
 @component
 class LocationRetriever:
@@ -75,6 +76,7 @@ class LocationRetriever:
         location = self.get_user_location()
         return {"content": f"Based on your location, you are at {location}."}
 
+
 @component
 class DateTimeRetriever:
     def __init__(self, api_key: str):
@@ -82,42 +84,60 @@ class DateTimeRetriever:
 
     @component.output_types(datetime=dict)
     def run(self, query: str) -> dict:
-        match = re.search(r"(?:date|time).*?(?:in|at|for)\s+([a-zA-Z\s]+)", query, re.IGNORECASE)
+        match = re.search(r"(?:date|time|وقت|تاريخ|ساعة).*?(?:in|at|for|في)\s+([a-zA-Z\s]+)", query, re.IGNORECASE)
         extracted = match.group(1).strip() if match else ""
 
-        filler_terms = {"time", "date", "today", "now", "it", "is", "this", ""}
-        if extracted.lower() in filler_terms:
-            location = "Cairo" 
+        filler_terms = {"time", "date", "today", "now", "it", "is", "this", "وقت", "تاريخ", "اليوم", "الآن", "ساعة", ""}
+        if extracted.lower() in filler_terms or not extracted:
+            location = "Cairo"
         else:
-            location = extracted.title() 
+            location = extracted.title()
 
+        print(f"Fetching time for location: {location}")
         url = f"http://api.weatherapi.com/v1/timezone.json?key={self.api_key}&q={location}"
-        response = requests.get(url)
+        try:
+            response = requests.get(url)
+            print(f"Time API response status: {response.status_code}")
+            if response.status_code == 200:
+                data = response.json()
+                location_name = data['location']['name']
+                country = data['location']['country']
+                localtime = data['location']['localtime']
 
-        if response.status_code == 200:
-            data = response.json()
-            location_name = data['location']['name']
-            country = data['location']['country']
-            localtime = data['location']['localtime']
+                date_part, time_part = localtime.split()
+                year, month, day = map(int, date_part.split('-'))
+                hour, minute = map(int, time_part.split(':'))
 
-            date_part, time_part = localtime.split()
-            include_date = "date" in query.lower()
-            include_time = "time" in query.lower()
+                include_date = any(term in query.lower() for term in ["date", "تاريخ"])
+                include_time = any(term in query.lower() for term in ["time", "وقت", "ساعة"])
 
-            if not include_date and not include_time:
-                include_date = include_time = True
+                if not include_date and not include_time:
+                    include_date = include_time = True
 
-            parts = []
-            if include_date:
-                parts.append(f"the date is {date_part}")
-            if include_time:
-                parts.append(f"the time is {time_part}")
+                parts = []
+                if include_date:
+                    # Verbalize date (e.g., "eleventh of June two thousand twenty-five")
+                    day_text = num2words(day, to='ordinal', lang='en')
+                    month_text = ["January", "February", "March", "April", "May", "June",
+                                  "July", "August", "September", "October", "November", "December"][month-1]
+                    year_text = num2words(year, lang='en')
+                    parts.append(f"the date is {day_text} of {month_text} {year_text}")
+                if include_time:
+                    # Verbalize time (e.g., "thirteen and seventeen")
+                    hour_text = num2words(hour, lang='en')
+                    minute_text = num2words(minute, lang='en')
+                    parts.append(f"the time is {hour_text} and {minute_text}")
 
-            joined = " and ".join(parts)
-            content = f"In {location_name}, {country}, {joined}."
+                joined = " and ".join(parts)
+                content = f"In {location_name}, {country}, {joined}."
 
-            result = {'content': content, 'url': "https://www.weatherapi.com/"}
-        else:
+                result = {'content': content, 'url': "https://www.weatherapi.com/"}
+            else:
+                error_message = response.json().get('error', {}).get('message', 'Unknown error')
+                print(f"Time API error: {error_message}")
+                result = {'content': "Sorry, I couldn't retrieve the time.", 'url': ""}
+        except Exception as e:
+            print(f"Time API request error: {str(e)}")
             result = {'content': "Sorry, I couldn't retrieve the time.", 'url': ""}
 
         return result
