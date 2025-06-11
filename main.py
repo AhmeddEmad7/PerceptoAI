@@ -63,8 +63,9 @@ async def process_audio(
         )  # Pass file extension
         response = rag_pipeline.process_query(prompt)
         conversations_db = ConversationDatabase()
+        current_voice = conversations_db.get_current_voice()
         audio_response = await convert_text_to_speech(
-            response["answer"], prompt, conversations_db.get_current_voice()
+            response["answer"], prompt, current_voice
         )
 
         conversations_data = save_conversation(
@@ -101,6 +102,7 @@ async def process_audio(
             "prompt_type": response["prompt_type"],
             "response": response["answer"],
             "audio_response": audio_response,
+            "voice": current_voice,
         }
 
     except Exception as e:
