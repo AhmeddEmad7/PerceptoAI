@@ -109,6 +109,12 @@ class RAGPipeline:
                         print(f"Translated {type_name} content to Arabic: {content}")
                 break
         
+        # Fallback: If no prompt type matched, use generator reply as content
+        if prompt_type is None:
+            print("Warning: No prompt type matched. Using generator reply as content.")
+            prompt_type = 'question'  # Default to question for unmatched Arabic queries
+            content = generator_reply.strip()
+            
         print("Prompt type:", prompt_type)
         print("Content:", content)
         
