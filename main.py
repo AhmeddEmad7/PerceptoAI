@@ -17,6 +17,11 @@ from fastapi import Query
 import os
 from fastapi.middleware.cors import CORSMiddleware
 
+from langdetect import detect, DetectorFactory
+
+# Ensure consistent language detection results
+DetectorFactory.seed = 0
+
 load_dotenv()
 app = FastAPI(title="PerceptoAI RAG Pipeline")
 
@@ -56,14 +61,26 @@ async def process_audio(
 
         # Create a BytesIO object for in-memory processing
         audio_buffer = io.BytesIO(audio_data)
-        audio_buffer.name = file.filename  # Set filename for compatibility
+        audio_buffer.name = file.filename
 
         # Process audio directly from memory
-        prompt = await convert_audio_to_text(
-            audio_buffer, file_ext[1:]
-        )  # Pass file extension
-        response = rag_pipeline.process_query(prompt)
-        audio_response = await convert_text_to_speech(response["answer"], prompt, voice)
+        prompt = await convert_audio_to_text(audio_buffer, file_ext[1:])
+
+        # Detect input language
+        try:
+            input_language = detect(prompt)  # Returns language code (e.g., 'ar' for Arabic)
+        except:
+            input_language = "en"  # Fallback to English if detection fails
+
+        print(f"Detected input language: {input_language}")
+
+        # Process query with language information
+        response = rag_pipeline.process_query(prompt, input_language=input_language)
+
+        # Pass input_language to text-to-speech
+        audio_response = await convert_text_to_speech(
+            response["answer"], prompt, voice, input_language
+        )
 
         conversations_data = save_conversation(
             {
@@ -99,6 +116,7 @@ async def process_audio(
             "prompt_type": response["prompt_type"],
             "response": response["answer"],
             "audio_response": audio_response,
+            "language": input_language,
         }
 
     except Exception as e:
