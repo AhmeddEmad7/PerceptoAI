@@ -4,7 +4,6 @@ from typing import Optional
 from fastapi import HTTPException
 import whisper
 
-# from gtts import gTTS
 from elevenlabs.client import ElevenLabs
 from dotenv import load_dotenv
 from datetime import datetime
@@ -16,6 +15,9 @@ from config.elevenlabs_voice_config import ELEVENLABS_VOICE_IDs, TONE_SETTINGS
 import numpy as np
 from pydub import AudioSegment
 from io import BytesIO
+
+import re
+from num2words import num2words
 
 load_dotenv()
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -33,7 +35,7 @@ async def convert_audio_to_text(audio_input: BytesIO, file_format: str) -> str:
         samples /= np.iinfo(audio.array_type).max  # Normalize to [-1.0, 1.0]
 
         # Load Whisper model and transcribe
-        model = whisper.load_model("base")  # Adjust model size as needed
+        model = whisper.load_model("medium")  # Adjust model size as needed
         result = model.transcribe(samples, fp16=False)  # Explicitly use FP32 on CPU
         return result["text"]
     except Exception as e:
@@ -41,7 +43,7 @@ async def convert_audio_to_text(audio_input: BytesIO, file_format: str) -> str:
 
 
 async def convert_text_to_speech(
-    answer: str, prompt: str = None, voice_name: str = "Sarah"
+    answer: str, prompt: str = None, voice_name: str = "Sarah", input_language:str = "en"
 ) -> str:
     """
     Convert text to speech using ElevenLabs with basic tone adjustment based on sentiment.
@@ -51,9 +53,27 @@ async def convert_text_to_speech(
             raise HTTPException(
                 status_code=500, detail="ELEVENLABS_API_KEY not found in .env file"
             )
+        
+        if input_language == "ar":
+            western_to_arabic = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
+            answer = answer.translate(western_to_arabic)
+
+            # Verbalize decimals (e.g., "31.4" → "واحد وثلاثون وأربعة أعشار")
+            def verbalize_decimal(match):
+                number = float(match.group(0))
+                integer_part = int(number)
+                decimal_part = int((number - integer_part) * 10)
+                integer_text = num2words(integer_part, lang='ar')
+                if decimal_part == 0:
+                    return integer_text
+                decimal_text = num2words(decimal_part, lang='ar')
+                return f"{integer_text} و{decimal_text} أعشار"
+            
+            answer = re.sub(r'\d+\.\d', verbalize_decimal, answer)
+            print(f"Preprocessed Arabic text for TTS: {answer}")
 
         tone = "neutral"
-        if prompt:
+        if prompt: 
             analysis = TextBlob(prompt)
             polarity = analysis.sentiment.polarity
             subjectivity = analysis.sentiment.subjectivity
@@ -160,52 +180,29 @@ async def create_conversation_title(
     conversation_id: int, user_message: str, ai_response: str
 ) -> str:
     """
-    Create a conversation title based on user input and AI response.
-
-    Args:
-        conversation_id (int): The ID of the conversation in the database.
-        user_message (str): The user's input message.
-        ai_response (str): The AI's response to the user's message.
-
-    Returns:
-        str: The generated conversation title.
-
-    Raises:
-        HTTPException: If title generation or database update fails.
+    Create a concise title for a conversation based on the user input and AI response.
     """
     try:
-        # Initialize OpenAI generator
         generator = OpenAIGenerator(model="gpt-4o-mini")
 
-        # Define a simple prompt for title generation
-        prompt_template = """
-        Create a concise conversation title (max 50 characters) based on the following user message and AI response. Only return the title, don't return any other text.
-        User message: {{ user_message }}
-        AI response: {{ ai_response }}
-        """
-
-        # Build the prompt
-        prompt = prompt_template.replace("{{ user_message }}", user_message).replace(
-            "{{ ai_response }}", ai_response
+        prompt = (
+            "Create a concise conversation title (max 50 characters) "
+            "based on the following user message and AI response. "
+            "Only return the title, don't return any other text.\n"
+            f"User message: {user_message}\n"
+            f"AI response: {ai_response}"
         )
 
-        # Generate the title
         result = generator.run(prompt)
-        title = result["replies"][0].strip()
+        title = result["replies"][0].strip()[:50]  # Ensure max 50 characters
 
-        # Ensure title is within 50 characters
-        title = title[:50]
-
-        # Update the conversation title in the database
         conversation_db = ConversationDatabase()
-        conversation_db.update_conversation_title(
-            conversation_id=conversation_id,
-            title=title,
-        )
+        conversation_db.update_conversation_title(conversation_id, title)
 
         return title
 
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Error creating conversation title: {str(e)}"
+            status_code=500,
+            detail=f"Error creating conversation title: {str(e)}"
         )

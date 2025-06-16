@@ -28,6 +28,7 @@ class RAGPipeline:
         self.datetime_retriever = DateTimeRetriever(api_key=os.getenv('WEATHER_API_KEY'))
         self.web_search = SerpAPIWebSearch(api_key=os.getenv('SERP_API_KEY'))
         self.router = ConditionalRouter(routes=self.routes)
+        self.translator = OpenAIGenerator(model="gpt-4o-mini")  # For translating tool output
 
         self.pipeline = Pipeline()
         self.pipeline.add_component("query_embedder", self.embedder)
@@ -49,26 +50,40 @@ class RAGPipeline:
         self.pipeline.connect("router.datetime_search", "datetime_retriever.query")
         self.pipeline.connect("router.web_search", "web_search.query")
 
-    def process_query(self, query: str, top_k: int = 5):
+    def translate_to_arabic(self, text: str) -> str:
+        """Translate English text to Arabic using OpenAI."""
+        if not text:
+            return text
+        translation_prompt = f"Translate the following English text to natural and fluent Arabic:\n\n{text}"
+        result = self.translator.run(translation_prompt)
+        return result["replies"][0]
+
+    def process_query(self, query: str, top_k: int = 5, input_language: str = "en"):
         """Process a query through the RAG pipeline with advanced routing"""
+        print(f"Processing query: {query} with input_language: {input_language}")
         result = self.pipeline.run(
             {
                 "query_embedder": {"text": query},
                 "retriever": {"top_k": top_k},
-                "prompt": {"query": query, "user_name": self.user_name},
+                "prompt": {
+                    "query": query,
+                    "user_name": self.user_name,
+                    "input_language": input_language,
+                },
                 "router": {"query": query}
             },
             include_outputs_from={"retriever", "generator"}
         )
         
         generator_reply = result["generator"]["replies"][0]
+        print(f"Generator reply: {generator_reply}")
         prompt_type_map = {
-            ('question: ', 'Question: '): 'question',
-            ('statement: ', 'Statement: '): 'statement',
-            'use_weather_tool': 'weather',
-            'use_datetime_tool': 'datetime',
-            'use_location_tool': 'location',
-            'use_web_search_tool': 'web_search'
+        ('question: ', 'Question: ', 'سؤال: '): 'question',
+        ('statement: ', 'Statement: ', 'بيان: '): 'statement',
+        'use_weather_tool': 'weather',
+        'use_datetime_tool': 'datetime',
+        'use_location_tool': 'location',
+        'use_web_search_tool': 'web_search'
         }
 
         prompt_type = None
@@ -88,24 +103,31 @@ class RAGPipeline:
                     url = result["web_search"]["web_documents"]["url"]
                 else:
                     content = result[f"{type_name}_retriever"]["content"]
+                    # Translate to Arabic if input_language is 'ar'
+                    if input_language == "ar" and type_name in ['weather', 'datetime', 'location']:
+                        content = self.translate_to_arabic(content)
+                        print(f"Translated {type_name} content to Arabic: {content}")
                 break
         
+        # Fallback: If no prompt type matched, use generator reply as content
+        if prompt_type is None:
+            print("Warning: No prompt type matched. Using generator reply as content.")
+            prompt_type = 'question'  # Default to question for unmatched Arabic queries
+            content = generator_reply.strip()
+            
         print("Prompt type:", prompt_type)
         print("Content:", content)
         
         return {
             "answer": content,
             "prompt_type": prompt_type,
-            "url": url
+            "url": url,
+            "language": input_language
         }
 
     def export_pipeline_diagram(self, output_path: str = 'pipeline_diagrams.png'):
-        """
-        Export the pipeline diagram to a PNG file.
-        """ 
         self.pipeline.draw(output_path, params={
             "format": "img",
             "theme": "default",
             "bgColor": "#FFFFFF"
         })
-        return
