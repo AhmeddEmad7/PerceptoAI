@@ -4,7 +4,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from database import ConversationDatabase
 from services import (
     convert_audio_to_text,
-    convert_text_to_speech,
+    # convert_text_to_speech,
     create_conversation_title,
     save_conversation,
 )
@@ -44,7 +44,6 @@ async def process_audio(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     new_conv: Optional[bool] = Query(False, description="Start a new conversation"),
-    voice: Optional[str] = Query("Sarah", description="Voice to use for the response"),
 ):
     try:
         rag_pipeline = RAGPipeline(user_name=USER_NAME)
@@ -63,7 +62,6 @@ async def process_audio(
         audio_buffer = io.BytesIO(audio_data)
         audio_buffer.name = file.filename
 
-        # Process audio directly from memory
         prompt = await convert_audio_to_text(audio_buffer, file_ext[1:])
 
         # Detect input language
@@ -117,10 +115,34 @@ async def process_audio(
             "response": response["answer"],
             "audio_response": audio_response,
             "language": input_language,
+            # "audio_response": audio_response,
+            "voice": current_voice,
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+
+
+@app.get("/voice")
+def get_voice():
+    conversations_db = ConversationDatabase()
+    return {"voice": conversations_db.get_current_voice()}
+
+
+@app.put("/voice")
+def update_voice(voice: str):
+    if not voice:
+        raise HTTPException(status_code=400, detail="Voice cannot be empty")
+
+    allowed_voices = ["Bella", "Antoni", "Elli", "Josh", "Sarah", "Brian"]
+    if voice not in allowed_voices:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid voice. Allowed voices: {allowed_voices}"
+        )
+
+    conversations_db = ConversationDatabase()
+    conversations_db.update_current_voice(voice)
+    return {"message": f"Voice updated to {voice}"}
 
 
 @app.get("/conversations")
