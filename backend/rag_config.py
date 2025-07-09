@@ -76,6 +76,7 @@ PROMPT_TEMPLATE = """
 
         Current Query: {{query}}
         """
+
 ROUTES = [
       {
          "condition": '{{ "use_weather_tool" in replies[0].lower() }}',

@@ -8,6 +8,7 @@ import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Image from 'next/image';
+import React from 'react'; // Ensure React is imported for React.CSSProperties
 
 interface MessageItemProps {
   message: {
@@ -15,6 +16,7 @@ interface MessageItemProps {
     role: 'user' | 'assistant';
     content: string;
     image?: string;
+    audioUrl?: string; // Add audioUrl to the Message interface
   };
 }
 
@@ -37,7 +39,7 @@ export function MessageItem({ message }: MessageItemProps) {
       >
         <AvatarFallback>{isUser ? 'U' : 'AI'}</AvatarFallback>
         {!isUser && (
-          <AvatarImage src='/percepton-avatar.png' alt='Percepton AI' />
+          <AvatarImage/>
         )}
       </Avatar>
       <div
@@ -70,7 +72,7 @@ export function MessageItem({ message }: MessageItemProps) {
                 const match = /language-(\w+)/.exec(className || '');
                 return match ? (
                   <SyntaxHighlighter
-                    style={vscDarkPlus}
+                    style={vscDarkPlus as Record<string, React.CSSProperties>}
                     language={match[1]}
                     PreTag='div'
                     {...props}
@@ -87,6 +89,10 @@ export function MessageItem({ message }: MessageItemProps) {
           >
             {message.content}
           </ReactMarkdown>
+        )}
+
+        {message.audioUrl && message.role === 'assistant' && (
+          <audio controls src={message.audioUrl} className='mt-2 w-full' />
         )}
       </div>
     </div>

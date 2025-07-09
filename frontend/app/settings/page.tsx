@@ -16,7 +16,7 @@ export default function SettingsPage() {
         <div className='space-y-1'>
           <h1 className='text-3xl font-bold'>Settings</h1>
           <p className='text-muted-foreground'>
-            Customize your Percepton.AI experience
+            Customize your PerceptoAI experience
           </p>
         </div>
       </div>

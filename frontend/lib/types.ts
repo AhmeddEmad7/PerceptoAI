@@ -4,6 +4,7 @@ export interface Message {
   user_input: string;
   ai_response: string;
   image?: string;
+  audioUrl?: string;
 }
 
 export interface Conversation {

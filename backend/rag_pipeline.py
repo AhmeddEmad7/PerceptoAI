@@ -6,8 +6,8 @@ from haystack.components.generators.openai import OpenAIGenerator
 from haystack_integrations.components.retrievers.chroma import ChromaEmbeddingRetriever
 from haystack_integrations.document_stores.chroma import ChromaDocumentStore
 from haystack.components.routers import ConditionalRouter
-from custom_components import LocationRetriever, DateTimeRetriever, WeatherRetriever, SerpAPIWebSearch
-from rag_config import PROMPT_TEMPLATE, ROUTES
+from backend.custom_components import LocationRetriever, DateTimeRetriever, WeatherRetriever, SerpAPIWebSearch
+from backend.rag_config import PROMPT_TEMPLATE, ROUTES
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -90,6 +90,7 @@ class RAGPipeline:
                     content = result[f"{type_name}_retriever"]["content"]
                 break
         
+        print("Query:", query)
         print("Prompt type:", prompt_type)
         print("Content:", content)
         

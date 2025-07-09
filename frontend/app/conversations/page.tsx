@@ -4,14 +4,28 @@ import { useRouter } from 'next/navigation';
 import { EmptyState } from "@/components/empty-state"
 import { Button } from "@/components/ui/button"
 import { Plus } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'; // Import useQueryClient
 
 export default function ConversationsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient(); // Initialize useQueryClient
 
-  const handleNewConversation = () => {
-    // In a real app, this would create a new conversation in the backend
-    const newId = 'conv-new';
-    router.push(`/conversations/${newId}`);
+  const handleNewConversation = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/conversations`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to create conversation');
+      const newConversation = await response.json();
+      queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Invalidate and refetch conversations
+      router.push(`/conversations/${newConversation.conversation_id}`);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
   };
 
   return (

@@ -51,10 +51,14 @@ class ConversationDatabase:
             if not session.query(Settings).filter_by(key="current_voice").first():
                 default_setting = Settings(key="current_voice", value="Sarah")
                 session.add(default_setting)
-                session.commit()
+            # Initialize total_interactions_count if it doesn't exist
+            if not session.query(Settings).filter_by(key="total_interactions_count").first():
+                default_interaction_count = Settings(key="total_interactions_count", value="0")
+                session.add(default_interaction_count)
+            session.commit()
 
-    def start_new_conversation(self) -> int:
-        """Start a new conversation and return its ID."""
+    def create_new_conversation(self) -> int:
+        """Create a new conversation and return its ID."""
         with self.Session() as session:
             conversation = Conversation()
             session.add(conversation)
@@ -64,10 +68,13 @@ class ConversationDatabase:
     def save_message(
         self, user_input: str, ai_response: str, conversation_id: Optional[int] = None
     ) -> int:
-        """Save a message to a conversation and return the conversation ID."""
+        """Save a message to a conversation and return the message ID."""
         with self.Session() as session:
+            # If conversation_id is None, it means we need to create a new conversation for this message.
+            # This scenario should primarily be handled by the /conversations POST endpoint,
+            # but this provides a fallback for the first message if not explicitly created.
             if conversation_id is None:
-                conversation_id = self.start_new_conversation()
+                conversation_id = self.create_new_conversation()
 
             message = Message(
                 conversation_id=conversation_id,
@@ -77,7 +84,13 @@ class ConversationDatabase:
             session.add(message)
             session.commit()
 
-            return conversation_id
+            # Increment the total_interactions_count
+            total_interactions_setting = session.query(Settings).filter_by(key="total_interactions_count").first()
+            if total_interactions_setting:
+                total_interactions_setting.value = str(int(total_interactions_setting.value) + 1)
+                session.commit()
+
+            return message.id # Return message.id
 
     def get_messages_from_conversation(
         self, conversation_id: int, limit: int = 100
@@ -87,7 +100,7 @@ class ConversationDatabase:
             messages = (
                 session.query(Message)
                 .filter_by(conversation_id=conversation_id)
-                .order_by(Message.timestamp.desc())
+                .order_by(Message.timestamp.asc()) # Change to ascending order
                 .limit(limit)
                 .all()
             )
@@ -123,9 +136,10 @@ class ConversationDatabase:
             return None
 
     def get_conversation_count(self) -> int:
-        """Get the total number of conversations."""
+        """Get the total number of interactions (user input + AI response)."""
         with self.Session() as session:
-            return session.query(func.count(Conversation.id)).scalar()
+            setting = session.query(Settings).filter_by(key="total_interactions_count").first()
+            return int(setting.value) if setting else 0
 
     def get_latest_conversation_id(self) -> Optional[int]:
         """Get the ID of the latest conversation."""
@@ -159,6 +173,31 @@ class ConversationDatabase:
                 }
                 for conv in conversations
             ]
+
+    def get_conversation_details(self, conversation_id: int) -> Optional[Dict]:
+        """Retrieve details for a specific conversation by ID, including its title."""
+        with self.Session() as session:
+            conversation = session.query(Conversation).get(conversation_id)
+            if conversation:
+                return {
+                    "id": conversation.id,
+                    "title": conversation.title,
+                    "created_at": conversation.created_at.isoformat(),
+                }
+            return None
+        
+    def reset_total_interactions_count(self) -> None:
+        """Reset the total interactions count to 0."""
+        with self.Session() as session:
+            setting = session.query(Settings).filter_by(key="total_interactions_count").first()
+            if setting:
+                setting.value = "0"
+                session.commit()
+            else:
+                # This case should ideally not happen if __init__ sets it up
+                new_setting = Settings(key="total_interactions_count", value="0")
+                session.add(new_setting)
+                session.commit()
 
     def get_current_voice(self) -> str:
         """Retrieve the current voice from the settings table."""

@@ -8,7 +8,6 @@ from rag_config import USER_NAME
 load_dotenv()
 chroma_client = chromadb.PersistentClient(path="data/databases/chroma_db")
 collection = chroma_client.create_collection(name="conversations")
-# collection = chroma_client.create_collection(name="conversations", configuration={"hnsw": {"space": "cosine"}})
 
 def add_user_facts():
     try:

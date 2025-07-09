@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import type { Conversation } from '@/lib/types';
+import { useQueryClient } from '@tanstack/react-query';
 
 async function fetchConversations(): Promise<Conversation[]> {
   const response = await fetch(
@@ -27,10 +28,11 @@ async function fetchConversations(): Promise<Conversation[]> {
 }
 
 export function Sidebar() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   // Fetch conversations using TanStack Query
   const {
@@ -50,12 +52,14 @@ export function Sidebar() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: 'New Conversation' }),
+          // No body needed as the backend will create the conversation
         }
       );
       if (!response.ok) throw new Error('Failed to create conversation');
       const newConversation = await response.json();
-      router.push(`/conversations/${newConversation.id}`);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Invalidate and refetch conversations
+      router.push(`/conversations/${newConversation.conversation_id}`);
+      setIsOpen(false);
     } catch (error) {
       console.error('Error creating conversation:', error);
     }
@@ -84,9 +88,11 @@ export function Sidebar() {
         )}
       >
         <div className='flex h-14 items-center justify-between border-b px-4'>
-          <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500'>
-            Percepton.AI
-          </h1>
+          <Link href='/' className='flex items-center'>
+            <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500'>
+              PerceptoAI
+            </h1>
+          </Link>
           <Button
             variant='ghost'
             size='icon'

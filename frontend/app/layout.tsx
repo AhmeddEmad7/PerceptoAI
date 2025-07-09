@@ -7,7 +7,7 @@ import Providers from '@/components/providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Percepton.AI',
+  title: 'PerceptoAI',
   description: 'Your AI assistant with customizable voices',
   generator: 'Next.js',
   manifest: '/manifest.json',

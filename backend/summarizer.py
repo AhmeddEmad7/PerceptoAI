@@ -1,8 +1,9 @@
 from datetime import datetime
-from rag_pipeline import RAGPipeline
+from backend.rag_pipeline import RAGPipeline
 import numpy as np
 import uuid
 import chromadb
+from backend.database import ConversationDatabase
 
 class ConversationSummarizer:
     def __init__(self, rag_pipeline: RAGPipeline):
@@ -14,6 +15,10 @@ class ConversationSummarizer:
         if conversation_count >= conversation_count_threshold:
             print("\nSummarizing conversations...")
             self.summarize_conversations()
+
+            conversations_db = ConversationDatabase()
+            conversations_db.reset_total_interactions_count()
+            print("\nResetted total interactions count!")
             
     def summarize_conversations(self):
         """Summarize and cluster recent conversations"""

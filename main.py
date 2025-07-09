@@ -1,21 +1,22 @@
-import io
 import uvicorn
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
-from database import ConversationDatabase
-from services import (
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Response
+from backend.database import ConversationDatabase
+from backend.services import (
     convert_audio_to_text,
-    # convert_text_to_speech,
+    convert_text_to_speech,
     create_conversation_title,
     save_conversation,
 )
-from rag_pipeline import RAGPipeline
-from summarizer import ConversationSummarizer
+from backend.rag_pipeline import RAGPipeline
+from backend.summarizer import ConversationSummarizer
 from dotenv import load_dotenv
-from rag_config import USER_NAME, CONVERSATION_COUNT_THRESHOLD
+from backend.rag_config import USER_NAME, CONVERSATION_COUNT_THRESHOLD
 from typing import Optional
 from fastapi import Query
 import os
 from fastapi.middleware.cors import CORSMiddleware
+import tempfile
+import base64
 
 load_dotenv()
 app = FastAPI(title="PerceptoAI RAG Pipeline")
@@ -38,35 +39,29 @@ async def root():
 async def process_audio(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
-    new_conv: Optional[bool] = Query(False, description="Start a new conversation"),
+    conversation_id: Optional[int] = Query(None, description="Current conversation ID")
 ):
     try:
         rag_pipeline = RAGPipeline(user_name=USER_NAME)
         conversation_summarizer = ConversationSummarizer(rag_pipeline)
 
-        # Read audio data into memory
-        audio_data = await file.read()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            audio_data = await file.read()
+            temp_file.write(audio_data)
+            temp_file.flush()
 
-        # Validate file format
-        allowed_extensions = {".wav", ".mp3", ".m4a"}
-        file_ext = os.path.splitext(file.filename)[1].lower()
-        if file_ext not in allowed_extensions:
-            raise HTTPException(status_code=400, detail="Unsupported file format")
-
-        # Create a BytesIO object for in-memory processing
-        audio_buffer = io.BytesIO(audio_data)
-        audio_buffer.name = file.filename  # Set filename for compatibility
-
-        # Process audio directly from memory
-        prompt = await convert_audio_to_text(
-            audio_buffer, file_ext[1:]
-        )  # Pass file extension
+        prompt = await convert_audio_to_text(temp_file.name)
         response = rag_pipeline.process_query(prompt)
         conversations_db = ConversationDatabase()
         current_voice = conversations_db.get_current_voice()
-        # audio_response = await convert_text_to_speech(
-        # response["answer"], prompt, current_voice
-        # )
+        audio_response = await convert_text_to_speech(
+            response["answer"], prompt, current_voice
+        )
+
+        with open(audio_response, "rb") as f:
+            audio_content = f.read()
+        os.unlink(audio_response)
+        encoded_audio = base64.b64encode(audio_content).decode('utf-8')
 
         conversations_data = save_conversation(
             {
@@ -74,9 +69,8 @@ async def process_audio(
                 "ai_response": response,
                 "embedder": rag_pipeline.embedder,
                 "user_name": USER_NAME,
-                "conv_count_threshold": CONVERSATION_COUNT_THRESHOLD,
             },
-            new_conv,
+            conversation_id=conversation_id
         )
 
         print(
@@ -89,24 +83,44 @@ async def process_audio(
             CONVERSATION_COUNT_THRESHOLD,
         )
 
-        if new_conv:
-            background_tasks.add_task(
-                create_conversation_title,
-                conversations_data["conversation_id"],
-                prompt,
-                response["answer"],
-            )
+        # Check if the conversation needs a title (i.e., if it's a new conversation without one)
+        current_conversation_id = conversations_data["conversation_id"]
+        if current_conversation_id is not None:
+            conversations_db = ConversationDatabase()
+            conversation_details = conversations_db.get_conversation_details(current_conversation_id)
+            if conversation_details and conversation_details["title"] is None:
+                background_tasks.add_task(
+                    create_conversation_title,
+                    current_conversation_id,
+                    prompt,
+                    response["answer"],
+                )
+        
 
         return {
             "transcription": prompt,
             "prompt_type": response["prompt_type"],
             "response": response["answer"],
-            # "audio_response": audio_response,
+            "audio_response_base64": encoded_audio,
             "voice": current_voice,
+            "conversation_id": conversations_data["conversation_id"],
+            "message_id": conversations_data["message_id"],
         }
 
+    except HTTPException as http_exc:
+        print(f"ERROR: HTTPException in process_audio: {http_exc.detail}")
+
+
+@app.post("/conversations")
+async def create_new_conversation():
+    try:
+        conversations_db = ConversationDatabase()
+        new_conv_id = conversations_db.create_new_conversation()
+        return {"conversation_id": new_conv_id, "message": "New conversation created"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error creating new conversation: {str(e)}"
+        )
 
 
 @app.get("/voice")
@@ -140,7 +154,6 @@ async def get_conversations():
         raise HTTPException(
             status_code=500, detail=f"Error fetching conversations: {str(e)}"
         )
-
 
 @app.get("/conversations/{conversation_id}")
 async def get_conversation_messages(
