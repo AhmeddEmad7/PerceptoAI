@@ -4,10 +4,11 @@ PerceptoAI is an advanced AI assistant designed for natural and intuitive voice-
 
 ## Project Preview
 <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px;">
-  <img src="assets/1.png" alt="Project Preview 1" width="200">
-  <img src="assets/2.png" alt="Project Preview 2" width="200">
-  <img src="assets/3.png" alt="Project Preview 3" width="200">
-  <img src="assets/5.png" alt="Project Preview 5" width="200">
+  <img src="assets/1.png" alt="Project Preview 1" width="190">
+  <img src="assets/2.png" alt="Project Preview 2" width="190">
+  <img src="assets/3.png" alt="Project Preview 3" width="190">
+  <img src="assets/3.png" alt="Project Preview 4" width="190">
+  <img src="assets/5.png" alt="Project Preview 5" width="190">
 </div>
 
 ## Key Features
