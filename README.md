@@ -188,4 +188,4 @@ PerceptoAI/
 
 ## Contributing
 
-We welcome contributions! Please feel free to fork the repository and submit a pull request.
+We welcome any contributions! Please feel free to fork the repository and submit a pull request.
