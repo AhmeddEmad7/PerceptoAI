@@ -4,7 +4,6 @@
   <img src="assets/1.png" alt="Project Preview 1" width="200">
   <img src="assets/2.png" alt="Project Preview 2" width="200">
   <img src="assets/3.png" alt="Project Preview 3" width="200">
-  <img src="assets/4.png" alt="Project Preview 4" width="200">
   <img src="assets/5.png" alt="Project Preview 5" width="200">
 </div>
 
